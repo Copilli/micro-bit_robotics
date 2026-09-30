@@ -1,0 +1,29 @@
+{
+    "name": "copilli-robotica",
+    "version": "0.1.0",
+    "description": "Bloques sencillos en español para micro:bit V2, Maqueen Lite clásico y GamePad DFR0536 V4",
+    "license": "MIT",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "copilli.ts",
+        "hardware.ts",
+        "diagnostics.ts",
+        "robot.ts",
+        "gamepad.ts",
+        "mechanic.ts"
+    ],
+    "testFiles": [
+        "test.ts"
+    ],
+    "public": true,
+    "targetVersions": {
+        "target": "8.0.22",
+        "targetId": "microbit"
+    },
+    "supportedTargets": [
+        "microbit"
+    ],
+    "preferredEditor": "tsprj"
+}

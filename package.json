@@ -1,0 +1,11 @@
+{
+    "name": "pxt-copilli-robotica",
+    "private": true,
+    "scripts": {
+        "build": "pxt build",
+        "test": "pxt test"
+    },
+    "devDependencies": {
+        "pxt": "0.5.1"
+    }
+}

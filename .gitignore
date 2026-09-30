@@ -1,0 +1,12 @@
+node_modules/
+pxt_modules/
+built/
+*.hex
+*.elf
+*.map
+*.blocks
+*.js
+*.d.ts
+.pxt/
+
+tsconfig.json

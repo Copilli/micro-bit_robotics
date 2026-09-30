@@ -1,0 +1,14 @@
+{
+    "name": "copilli-radio-proporcional-robot",
+    "dependencies": {
+        "core": "*",
+        "copilli-robotica": "file:../../.."
+    },
+    "files": [
+        "main.ts"
+    ],
+    "targetVersions": {
+        "target": "8.0.22",
+        "targetId": "microbit"
+    }
+}
