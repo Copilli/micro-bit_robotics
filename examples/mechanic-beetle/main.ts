@@ -1,6 +1,6 @@
 copilli.iniciarMaqueen()
 
-// EJEMPLO COMPILABLE, NO CALIBRADO: reemplaza ambos ceros por ángulos medidos
+// PLANTILLA CON CALIBRACIÓN PENDIENTE: reemplaza ambos ceros por ángulos medidos
 // sin carga y bajo supervisión. Mientras sigan en cero no se ordena ningún servo.
 copilli.configurarPinza(copilli.PuertoServo.S1, 0, 0)
 

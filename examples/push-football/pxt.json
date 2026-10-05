@@ -1,8 +1,8 @@
 {
-    "name": "copilli-ejemplo-futbol-push",
+    "name": "robotics-ejemplo-futbol-push",
     "dependencies": {
         "core": "*",
-        "copilli-robotica": "file:../.."
+        "robotics": "file:../.."
     },
     "files": [
         "main.ts"

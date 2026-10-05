@@ -10,3 +10,5 @@ built/
 .pxt/
 
 tsconfig.json
+output/
+.playwright-cli/

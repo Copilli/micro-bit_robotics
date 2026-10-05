@@ -1,8 +1,8 @@
 {
-    "name": "copilli-ejemplo-mechanic-horquillas",
+    "name": "robotics-ejemplo-mechanic-horquillas",
     "dependencies": {
         "core": "*",
-        "copilli-robotica": "file:../.."
+        "robotics": "file:../.."
     },
     "files": [
         "main.ts"

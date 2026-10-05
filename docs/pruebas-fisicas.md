@@ -16,3 +16,12 @@
 - [ ] Verificar que mensajes de accesorio o desconocidos no mantengan movimiento y que pérdida de radio no abra una pinza.
 
 El grupo de Radio separa equipos por canal/grupo, pero no es autenticación ni control de acceso.
+
+- [ ] Con C ejecutando pausa/sonido, pulsar D y soltar C: comprobar antirrebote, independencia y ausencia de repeticiones mientras se sostiene.
+- [ ] Radio proporcional: cortar solo x o solo y, comprobar parada y que un solo eje posterior no reinicia. Enviar pareja nueva y `parar`; verificar con ruedas levantadas.
+- [ ] Pinza elevadora: identificar geometría escolar, probar apertura/elevación por separado, conflictos de puerto, dirección y carga permitida. No extrapolar compatibilidad desde Plus original.
+- [ ] Registrar fecha, revisión de placa/sensor, alimentación, programa, límites por eje y observaciones; conservar resultados fallidos también.
+
+La documentación oficial V4 ahora pudo consultarse y respalda el mapa de pines; eso no marca como realizadas estas pruebas. RGB ambiental no está implementado en esta versión.
+
+- [ ] Mando escolar V2: identificar revisión y verificar arriba=P8/abajo=P13/izquierda=P14/derecha=P15, X=P1/Y=P2; P16 es LED, no botón F. Probar cancelación de opuestos, diagonales, eventos X/Y y vibración P12. Seleccionar inicio V2, nunca V4 por defecto.

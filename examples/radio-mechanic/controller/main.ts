@@ -1,22 +1,23 @@
-// Firmware del micro:bit del mando; C abre y D cierra la pinza.
-copilli.iniciarGamepad()
+// Perfil escolar: DFR0536 V2 con cuatro botones de dirección, X/Y y A/B nativos.
+// Firmware del micro:bit del mando; X abre y Y cierra la pinza.
+copilli.iniciarGamepadBotones()
 radio.setGroup(22)
 
-copilli.alPulsarBoton(copilli.BotonGamepad.C, function () {
+copilli.alPulsarBoton(copilli.BotonGamepad.X, function () {
     radio.sendString("abrir")
 })
-copilli.alPulsarBoton(copilli.BotonGamepad.D, function () {
+copilli.alPulsarBoton(copilli.BotonGamepad.Y, function () {
     radio.sendString("cerrar")
 })
 
 basic.forever(function () {
-    if (copilli.joystickHacia(copilli.DireccionJoystick.Arriba)) {
+    if (copilli.mandoHacia(copilli.DireccionJoystick.Arriba)) {
         radio.sendString("avanzar")
-    } else if (copilli.joystickHacia(copilli.DireccionJoystick.Abajo)) {
+    } else if (copilli.mandoHacia(copilli.DireccionJoystick.Abajo)) {
         radio.sendString("retroceder")
-    } else if (copilli.joystickHacia(copilli.DireccionJoystick.Izquierda)) {
+    } else if (copilli.mandoHacia(copilli.DireccionJoystick.Izquierda)) {
         radio.sendString("izquierda")
-    } else if (copilli.joystickHacia(copilli.DireccionJoystick.Derecha)) {
+    } else if (copilli.mandoHacia(copilli.DireccionJoystick.Derecha)) {
         radio.sendString("derecha")
     } else {
         radio.sendString("parar")

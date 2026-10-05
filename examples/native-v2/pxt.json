@@ -1,5 +1,5 @@
 {
-    "name": "copilli-ejemplo-v2-nativo",
+    "name": "robotics-ejemplo-v2-nativo",
     "dependencies": {
         "core": "*"
     },

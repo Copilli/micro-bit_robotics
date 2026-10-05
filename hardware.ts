@@ -58,12 +58,21 @@ namespace copilliHardware {
     //% blockHidden=true
     export function distanceCm(): number {
         if (testDoubleEnabled) return fakeDistance
-        pins.digitalWritePin(DigitalPin.P1, 0)
-        basic.pause(2)
+        // DFRobot pxt-maqueen a1fbb5e, readUlt: acondicionamiento de 1 ms y ventana de 20 ms.
         pins.digitalWritePin(DigitalPin.P1, 1)
         basic.pause(1)
         pins.digitalWritePin(DigitalPin.P1, 0)
-        let pulse = pins.pulseIn(DigitalPin.P2, PulseValue.High, PULSE_TIMEOUT_US)
+        let level = pins.digitalReadPin(DigitalPin.P2)
+        if (level == 0) {
+            pins.digitalWritePin(DigitalPin.P1, 0)
+            pins.digitalWritePin(DigitalPin.P1, 1)
+        } else {
+            pins.digitalWritePin(DigitalPin.P1, 1)
+            pins.digitalWritePin(DigitalPin.P1, 0)
+        }
+        basic.pause(20)
+        pins.digitalWritePin(DigitalPin.P1, 0)
+        let pulse = pins.pulseIn(DigitalPin.P2, level == 0 ? PulseValue.High : PulseValue.Low, PULSE_TIMEOUT_US)
         if (pulse <= 0 || pulse >= PULSE_TIMEOUT_US) return -1
         return Math.round(pulse / 59)
     }

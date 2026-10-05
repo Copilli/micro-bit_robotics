@@ -1,4 +1,4 @@
-//% color=#7B3F98 icon="\uf1b9" block="Copilli" groups='["Robot","Sensores","Luces","GamePad","Mechanic","Avanzado"]'
+//% color=#7B3F98 icon="\uf1b9" block="Robotics" groups='["Preparación","Robot","Sensores","Luces","GamePad","Mechanic","Avanzado"]'
 namespace copilli {
     export enum Lado {
         //% block="izquierda"
@@ -7,6 +7,26 @@ namespace copilli {
         Derecha = 1,
         //% block="ambos"
         Ambos = 2
+    }
+
+    export enum DireccionGiro {
+        //% block="izquierda"
+        Izquierda = 0,
+        //% block="derecha"
+        Derecha = 1
+    }
+
+    export enum EjeMechanic {
+        //% block="apertura de pinza"
+        AperturaPinza = 0,
+        //% block="pala"
+        Pala = 1,
+        //% block="horquillas"
+        Horquillas = 2,
+        //% block="sensor Push"
+        SensorPush = 3,
+        //% block="elevación de pinza"
+        ElevacionPinza = 4
     }
 
     export enum SensorLinea {
@@ -39,7 +59,19 @@ namespace copilli {
         //% block="F"
         F = 3,
         //% block="Z"
-        Z = 4
+        Z = 4,
+        //% block="X (mando de botones)"
+        X = 5,
+        //% block="Y (mando de botones)"
+        Y = 6,
+        //% block="arriba (mando de botones)"
+        Arriba = 7,
+        //% block="abajo (mando de botones)"
+        Abajo = 8,
+        //% block="izquierda (mando de botones)"
+        Izquierda = 9,
+        //% block="derecha (mando de botones)"
+        Derecha = 10
     }
 
     export enum PuertoServo {
@@ -100,16 +132,15 @@ namespace copilliLogic {
 
     //% blockHidden=true
     export function normalizeAxis(raw: number, center: number, deadZone: number, invert: boolean): number {
-        let delta = raw - center
-        if (invert) delta = -delta
-        let magnitude = Math.abs(delta)
-        if (magnitude <= deadZone) return 0
+        if (raw != raw || center < 100 || center > 923 || deadZone != deadZone) return 0
+        let delta = limit(raw, 0, 1023) - center
         let span = delta < 0 ? center : 1023 - center
-        if (invert) span = delta < 0 ? 1023 - center : center
-        if (span <= deadZone) return 0
-        let scaled = Math.round((magnitude - deadZone) * 100 / (span - deadZone))
-        if (scaled > 100) scaled = 100
-        return delta < 0 ? -scaled : scaled
+        let normalized = Math.abs(delta) * 100 / span
+        let zone = limit(deadZone, 0, 30)
+        if (normalized <= zone) return 0
+        let scaled = Math.round((normalized - zone) * 100 / (100 - zone))
+        let sign = delta < 0 ? -1 : 1
+        return (invert ? -sign : sign) * limit(scaled, 0, 100)
     }
 
     //% blockHidden=true

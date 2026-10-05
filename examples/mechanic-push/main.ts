@@ -1,7 +1,7 @@
 copilli.iniciarMaqueen()
 
 // Push: el servo orienta el ultrasonido. La placa frontal empuja al conducir.
-// EJEMPLO COMPILABLE, NO CALIBRADO: reemplaza los ceros con ángulos medidos.
+// PLANTILLA CON CALIBRACIÓN PENDIENTE: reemplaza los ceros con ángulos medidos.
 copilli.configurarSensorGiratorio(copilli.PuertoServo.S1, 0, 0, 0)
 
 input.onButtonPressed(Button.A, function () {

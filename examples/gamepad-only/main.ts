@@ -1,20 +1,21 @@
-copilli.iniciarGamepad()
+// Perfil escolar: DFR0536 V2 con cuatro botones de dirección, X/Y y A/B nativos.
+copilli.iniciarGamepadBotones()
 
-// Las flechas usan la dirección dominante del joystick; el centro apaga la pantalla.
+// Las flechas usan la dirección dominante del mando; el centro apaga la pantalla.
 basic.forever(function () {
-    if (copilli.joystickHacia(copilli.DireccionJoystick.Arriba)) {
+    if (copilli.mandoHacia(copilli.DireccionJoystick.Arriba)) {
         basic.showArrow(ArrowNames.North)
-    } else if (copilli.joystickHacia(copilli.DireccionJoystick.Abajo)) {
+    } else if (copilli.mandoHacia(copilli.DireccionJoystick.Abajo)) {
         basic.showArrow(ArrowNames.South)
-    } else if (copilli.joystickHacia(copilli.DireccionJoystick.Izquierda)) {
+    } else if (copilli.mandoHacia(copilli.DireccionJoystick.Izquierda)) {
         basic.showArrow(ArrowNames.West)
-    } else if (copilli.joystickHacia(copilli.DireccionJoystick.Derecha)) {
+    } else if (copilli.mandoHacia(copilli.DireccionJoystick.Derecha)) {
         basic.showArrow(ArrowNames.East)
     } else {
         basic.clearScreen()
     }
 })
 
-copilli.alPulsarBoton(copilli.BotonGamepad.C, function () {
+copilli.alPulsarBoton(copilli.BotonGamepad.X, function () {
     basic.showIcon(IconNames.Yes)
 })

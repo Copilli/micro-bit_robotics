@@ -1,28 +1,51 @@
 # API de Copilli
 
-Los nombres, grupos, textos infantiles y simplificaciones de este paquete son diseño propio de Copilli; no son bloques oficiales de DFRobot. El controlador de referencia inspeccionado es [`pxt-maqueen` 1.7.17, commit `a1fbb5e88ef4d53b814138d5a5ed73ab08465deb`](https://github.com/DFRobot/pxt-maqueen/tree/a1fbb5e88ef4d53b814138d5a5ed73ab08465deb). La tabla de procedencia y las limitaciones están en [fuentes](fuentes.md) y [compatibilidad](compatibilidad.md).
+Los textos y API son diseño de Copilli. Control Maqueen contrastado con [DFRobot, commit fijo](https://github.com/DFRobot/pxt-maqueen/tree/a1fbb5e88ef4d53b814138d5a5ed73ab08465deb), sin importar sus tareas globales ni paquete. Radio permanece nativa, solo en ejemplos.
 
-| Bloque / API `copilli` | Acción interna | Hardware / perfil | Fuente del control |
-|---|---|---|---|
-| `iniciarMaqueen()` | Marca listo una sola vez y ordena velocidad cero a los dos motores | Maqueen Lite clásico/v4; controlador I²C `0x10` | `pxt-maqueen/maqueen.ts`: `motorStop`, registros `0x00`/`0x02` |
-| `avanzar`, `retroceder`, `girar`, `detener`, `moverRuedas` | Limita potencia y transforma signo a dirección y escala 0–255; dos órdenes independientes | Motores de Maqueen Lite clásico/v4 | `maqueen.ts`: `motorRun(index, direction, speed)` |
-| `distanciaCm()` | Pulso de eco de P2 con disparo P1; devuelve `-1` si no hay eco válido | Ultrasónico del perfil de robot | `maqueen.ts`: `readUlt` usa P1/P2 y timeout; su `Ultrasonic()` convierte lecturas fallidas en `500`, por eso aquí se usa `-1` |
-| `sobreLinea(sensor)` | Lee P13/P14; nivel bajo se interpreta como línea negra | Sensores de línea del perfil | `maqueen.ts`: `readPatrol`; la polaridad de negro debe comprobarse físicamente |
-| `faros(lado, encendidos)` | Escritura digital de P8/P12 | Faros Maqueen Lite clásico/v4 | `maqueen.ts`: `writeLED` y enum `LED` |
-| `lucesInferiores(color)`, `apagarLucesInferiores()` | No escriben pines; guardan diagnóstico de perfil no compatible | No disponible en Maqueen Lite clásico/v4 | RGB en el namespace Maqueen V5 de `maqueen.ts` usa un protocolo distinto; no se copia ni se mezcla |
-| `iniciarGamepad()` | Prepara entradas de botones y arranca un solo sondeo cooperativo de botones | Perfil solicitado DFR0536 V4; el pinout de esta variante requiere prueba física | Pinout solicitado por el issue; documentación DFR0536 inaccesible en esta sesión |
-| `joystickHacia`, `joystickX`, `joystickY` | Lee P1/P2, zona muerta configurable como porcentaje y centro calibrado manualmente | GamePad DFR0536 V4 con joystick | Perfil solicitado; no usar como prueba de otra revisión |
-| `botonPresionado`, `alPulsarBoton`, `alSoltarBoton` | Un sondeo compartido, tres muestras estables (≈30 ms) y despacho por transición | Entradas adicionales C–F y Z del perfil solicitado | Perfil solicitado; polaridad activa baja basada en el perfil de referencia, pendiente prueba |
-| `vibrar(ms)` | Salida temporal en P12, limitado a 5000 ms | GamePad DFR0536 V4; salida compartida con LED | Perfil solicitado; no existe control independiente del LED |
-| `configurarPinza`, `configurarPala`, `configurarHorquillas` | Guarda puerto y dos posiciones semánticas sin mover | Servo Mechanic Beetle, Loader o Forklift conectado al puerto S1/S2 de Maqueen | Registro de servo del controlador: `servoRun`, registros `0x14`/`0x15`; rangos físicos requieren calibración |
-| `configurarSensorGiratorio`, `orientarSensor` | Guarda y ordena posiciones izquierda/frente/derecha | Push: servo orienta el ultrasónico; la placa empuja al conducir | Registro de servo de `pxt-maqueen`; comportamiento del montaje no se ha verificado con fuente física accesible |
-| Acciones Beetle/Loader/Forklift | Interpola posición semántica o envía extremo calibrado y retorna de inmediato | Mecanismo configurado por el profesor | No hay sensor de confirmación; `detener()` solo detiene ruedas |
-| `posicionMechanic`, `quitarConfiguracionMechanic`, `diagnostico` | Posición avanzada, liberación lógica de puerto y último aviso no bloqueante | Perfil Mechanic | Decisión de API propia |
+| API | Contrato |
+|---|---|
+| `iniciarMaqueen`, `iniciarGamepad` | Preparación visible, explícita, roles exclusivos. Segundo rol rechazado antes de hardware. Repetición idempotente; solo el primer inicio Maqueen detiene ruedas. |
+| `avanzar`, `retroceder`, `girarHacia`, `detener` | Potencia 0–100 a 0–255; giro solo izquierda/derecha. Detener afecta ruedas, no energía del servo. |
+| `moverRuedas` | -100–100 por rueda; I²C 0x10, registros 0x00/0x02, dirección 0 adelante/1 atrás. Dos órdenes independientes, sin atomicidad física garantizada. |
+| `distanciaCm` | P1 disparo/P2 eco, secuencia `readUlt` del commit fijo: pausas **1/20 ms**, pulso alto/bajo según nivel inicial, timeout **29000 µs**, redondeo pulso/59. Pulso ≤0 o ≥timeout retorna -1. Sin reintento ni sustitución por 500. |
+| `sobreLinea` | P13/P14; nivel bajo se interpreta como negro. Polaridad escolar pendiente de prueba. |
+| `faros` | Digital P8/P12; izquierda/derecha/ambos. Dispositivo distinto de RGB ambiental. |
+| `joystickHacia`, `joystickX`, `joystickY` | X positivo derecha/Y positivo arriba; dirección dominante, empate favorece X. Centro inicial 512; calibración atómica acepta 100–923 en ambos ejes. |
+| `configurarZonaMuerta` | 0–30 % de cada semieje calibrado. Normaliza por longitud correspondiente, aplica umbral y reescala recorrido restante hasta ±100. Conserva extremos con centros desplazados. |
+| `botonPresionado`, eventos | C=P13/D=P14/E=P15/F=P16/Z=P8, activos bajos; tres muestras estables. Pausa 10 ms más espera de `forever`, sin garantía de 30 ms. |
+| `alPulsarBoton`, `alSoltarBoton` | Todos los estados se actualizan antes del despacho. Varias acciones conservadas, hasta 32 registros. Una fibra activa por manejador; repeticiones ocupadas descartadas; pulsación/liberación independientes. Bucle sin cesión puede bloquear runtime. |
+| `vibrar` | P12 compartido con LED, máximo 5000 ms, solapamientos descartados, apagado al terminar. |
+| `configurarPinza`, `abrirPinza`, `cerrarPinza` | Puerto y extremos apertura/cierre, independientes de elevación. |
+| `configurarElevacionPinza`, `subirPinza`, `bajarPinza` | Eje opcional independiente, dos extremos baja/alta. Configurar no mueve. |
+| `configurarPala`, `configurarHorquillas` y subir/bajar | Dos extremos semánticos bajo/alto. |
+| `configurarSensorGiratorio`, `orientarSensor` | Push: tres ángulos distintos izquierda/frente/derecha; la placa frontal empuja al conducir. |
+| `posicionMechanic` | API existente para apertura/pala/horquillas: 0 % cerrado/bajo, 100 % abierto/alto, incluso con ángulos invertidos. Enum histórico conservado; no se añadió elevación a esa firma. |
+| `quitarConfiguracionMechanic(puerto)` | Retira perfil del puerto, sin movimiento ni corte de energía. |
 
-## Límites importantes
+## Estado y calibración
 
-- El valor de potencia 0–100 es una escala de software convertida linealmente a 0–255 del controlador; no es velocidad física.
-- En el joystick, X positivo es derecha y Y positivo es arriba. La dirección con mayor magnitud gana; un empate se resuelve por el eje X. El centro está dentro de la zona muerta.
-- Las funciones no preparan otro dispositivo silenciosamente. Antes de usar una lectura/acción hay que llamar explícitamente a `iniciarMaqueen()` o `iniciarGamepad()`, en el micro:bit correspondiente.
-- La importación sola no escribe en hardware. `iniciarMaqueen()` detiene ruedas; `iniciarGamepad()` configura entradas y sondea botones, pero no escribe vibración, luces o motores.
-- No hay `radio.*` en archivos de producción. Se combinan los eventos oficiales de Radio con acciones de Copilli en los proyectos de ejemplo.
+`maqueenPreparado`/`gamepadPreparado` consultan estado lógico, sin detección de hardware. `diagnosticoRobot`, `diagnosticoGamepad`, `diagnosticoMechanic(eje)` separan avisos. `diagnostico()` conserva el último texto de operación; **no** es estado completo. Iniciar un subsistema no borra avisos ajenos.
+
+`EjeMechanic`: AperturaPinza=0, Pala=1, Horquillas=2, SensorPush=3, ElevacionPinza=4. Consultas sin acceso a hardware:
+
+- `mechanicConfigurado(eje)`: existe perfil.
+- `puertoMechanic(eje)`: 0=S1/1=S2/-1=sin perfil.
+- `perfilMechanic(eje)`: `S#: bajo/frente/alto`; en perfiles de dos extremos frente repite bajo.
+- `objetivoMechanic(eje)`: último ángulo enviado; -1 sin perfil/orden posterior a configurar. No es posición medida.
+- `resultadoConfiguracionMechanic(eje)`: última solicitud aceptada/rechazada/retirada; persiste tras una acción correcta.
+
+Se valida toda solicitud antes de sustituir el perfil. Rechazo conserva el anterior y lo declara; las acciones posteriores **seguirán usando ese perfil**. Aceptación reinicia objetivo a -1 sin movimiento. Dos actuadores/ejes no pueden ocupar el mismo puerto. Solo hay dos puertos: no se pueden configurar los cinco ejes simultáneamente.
+
+## Migración
+
+Namespace, valores de enums, firmas antiguas y los 35 IDs históricos se conservan. `girar(Lado, potencia)`/`copilli_girar` sigue compilando y Ambos sigue deteniendo; oculto/deprecado. Nuevos proyectos: `girarHacia(DireccionGiro, potencia)`/`copilli_girar_direccion`, solo izquierda/derecha. Ambos sigue disponible en faros.
+
+`lucesInferiores(Color)`/`apagarLucesInferiores()` conservan IDs ocultos/deprecados. Sin salida y con diagnóstico «RGB ambiental no implementado». Se eligió excluirlo de esta versión, sin afirmar ausencia física ni migrarlo incorrectamente a faros. RGB real requiere un controlador posterior documentado y probado.
+
+## Mando escolar de cuatro botones (DFR0536 V2)
+
+Nombre visible y paquete: **Robotics** (`robotics`/`pxt-robotics`). El namespace `copilli` y los IDs anteriores permanecen para no romper proyectos. La descripción especifica Maqueen Lite, GamePad DFRobot y Maqueen Mechanic.
+
+Selecciona **iniciar GamePad de botones (V2)**: arriba=P8, abajo=P13, izquierda=P14, derecha=P15; X=P1/Y=P2. Todo digital activo bajo con pull-up, sin lecturas analógicas ni tocar P16 (LED independiente). `mandoHacia`, `mandoX`, `mandoY` funcionan con ambos perfiles. V2 produce ejes -100/0/100; los opuestos simultáneos se cancelan, diagonales favorecen X. Lecturas de dirección inmediatas; `botonPresionado`/eventos aplican tres muestras estables también a direcciones y X/Y. V2 no ofrece proporcionalidad analógica.
+
+**iniciar GamePad con joystick (V4)** conserva API/ID antiguos y admite joystick calibrable. `joystickX/Y/Hacia` y calibración requieren V4 y rechazan uso en V2. Un cambio V2↔V4 en ejecución se rechaza antes de hardware; reinicia y elige explícitamente. Botones de otro perfil se rechazan/ignoran con aviso; no se remapean silenciosamente. Los seis controllers por Radio usan ahora V2 escolar: X/Y accesorios; en pinza elevadora A/B nativos suben/bajan. `gamepad-joystick` conserva ejemplo V4.

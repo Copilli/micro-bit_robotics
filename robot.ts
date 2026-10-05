@@ -2,19 +2,23 @@ namespace copilli {
     let maqueenReady = false
 
     function reportNotReady(device: string): void {
-        copilliDiagnostics.set("Prepara " + device + " con su bloque iniciar antes de usar esta accion.")
+        copilliDiagnostics.setRobot("Prepara " + device + " con su bloque iniciar antes de usar esta accion.")
     }
 
     /**
      * Prepara Maqueen Lite clásico/v4 y detiene sus ruedas. No inicializa accesorios.
      */
     //% blockId=copilli_iniciar_maqueen block="iniciar Maqueen"
-    //% group="Avanzado" weight=100
+    //% group="Preparación" weight=100
     export function iniciarMaqueen(): void {
-        if (maqueenReady) return
+        if (!copilliRuntime.claim(1)) return
+        if (maqueenReady) {
+            copilliDiagnostics.setRobot("")
+            return
+        }
         maqueenReady = true
         copilliHardware.stopMotors()
-        copilliDiagnostics.set("")
+        copilliDiagnostics.setRobot("")
     }
 
     //% blockHidden=true
@@ -49,7 +53,7 @@ namespace copilli {
      */
     //% blockId=copilli_girar block="girar sobre el sitio hacia %lado a potencia %potencia \\%"
     //% potencia.min=0 potencia.max=100 potencia.defl=40
-    //% group="Robot" weight=90
+    //% group="Robot" weight=90 blockHidden=true deprecated=true
     export function girar(lado: Lado, potencia: number): void {
         let power = copilliLogic.limit(potencia, 0, 100)
         if (lado == Lado.Izquierda)
@@ -71,6 +75,7 @@ namespace copilli {
             return
         }
         copilliHardware.stopMotors()
+        copilliDiagnostics.setRobot("")
     }
 
     /**
@@ -87,6 +92,7 @@ namespace copilli {
         }
         writeWheel(true, copilliLogic.limit(izquierda, -100, 100))
         writeWheel(false, copilliLogic.limit(derecha, -100, 100))
+        copilliDiagnostics.setRobot("")
     }
 
     function writeWheel(left: boolean, signedPower: number): void {
@@ -135,23 +141,34 @@ namespace copilli {
             return
         }
         copilliHardware.setHeadlight(lado, encendidos)
+        copilliDiagnostics.setRobot("")
     }
 
     /**
-     * El perfil Maqueen Lite clásico/v4 no implementa luces RGB inferiores.
+     * API antigua: RGB ambiental no implementado, aunque el hardware lo incluya.
      */
     //% blockId=copilli_luces_inferiores block="luces inferiores color %color"
-    //% group="Luces" weight=90
+    //% group="Luces" weight=90 blockHidden=true deprecated=true
     export function lucesInferiores(color: Color): void {
-        copilliDiagnostics.set("Luces RGB inferiores no disponibles en el perfil Maqueen Lite clasico/v4.")
+        copilliDiagnostics.setRobot("RGB ambiental no implementado en esta versión; no se envió ninguna salida.")
     }
 
     /**
-     * Apagado de luces inferiores; en este perfil no hay salida RGB inferior.
+     * API antigua: apagado RGB no implementado en esta versión.
      */
     //% blockId=copilli_apagar_luces_inferiores block="apagar luces inferiores"
-    //% group="Luces" weight=85
+    //% group="Luces" weight=85 blockHidden=true deprecated=true
     export function apagarLucesInferiores(): void {
-        copilliDiagnostics.set("Luces RGB inferiores no disponibles en el perfil Maqueen Lite clasico/v4.")
+        copilliDiagnostics.setRobot("RGB ambiental no implementado en esta versión; no se envió ninguna salida.")
     }
+    /** Giro infantil con dos direcciones. La API girar antigua sigue disponible. */
+    //% blockId=copilli_girar_direccion block="girar hacia %direccion a potencia %potencia \\%"
+    //% potencia.min=0 potencia.max=100 potencia.defl=40
+    //% group="Robot" weight=90
+    export function girarHacia(direccion: DireccionGiro, potencia: number): void {
+        girar(<Lado><number>direccion, potencia)
+    }
+    //% blockId=copilli_maqueen_preparado block="Maqueen preparado"
+    //% group="Avanzado" advanced=true
+    export function maqueenPreparado(): boolean { return maqueenReady }
 }

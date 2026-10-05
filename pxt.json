@@ -1,7 +1,7 @@
 {
-    "name": "copilli-robotica",
+    "name": "robotics",
     "version": "0.1.0",
-    "description": "Bloques sencillos en español para micro:bit V2, Maqueen Lite clásico y GamePad DFR0536 V4",
+    "description": "Robótica con micro:bit, Maqueen Lite, mandos DFRobot GamePad de botones V2 o joystick V4 y accesorios Maqueen Mechanic",
     "license": "MIT",
     "dependencies": {
         "core": "*"

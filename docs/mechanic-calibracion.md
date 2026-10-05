@@ -19,3 +19,11 @@ Los ejemplos `mechanic-*` contienen valores `0`, intencionalmente rechazados. Re
 Para un accesorio impreso en 3D que use un servo, primero revisa su geometría, torque/carga y montaje, conecta el servo a un puerto compatible y calibra manualmente sus extremos. Solo entonces se puede usar una de las configuraciones existentes si su semántica encaja. No se declara compatible un accesorio impreso específico.
 
 `detener()` detiene ruedas, pero no corta energía de servo ni libera una carga. No hay control de fuerza ni confirmación de posición.
+
+## Dos ejes de pinza y configuración vigente
+
+`configurarPinza` controla apertura/cierre; `configurarElevacionPinza` controla subida/bajada y exige otro puerto. `subirPinza`/`bajarPinza` no cambian el objetivo de apertura, y abrir/cerrar no cambia elevación. El ejemplo usa S1 elevación/S2 apertura como referencia histórica de Plus original: el montaje mecánico en Lite debe identificarse y probarse, no se declara garantizado.
+
+Se valida toda solicitud antes de reemplazar un perfil. Si se rechaza, continúa vigente el anterior y las próximas acciones lo usan. Consulta `resultadoConfiguracionMechanic(eje)`, `perfilMechanic(eje)`, `mechanicConfigurado(eje)` y `objetivoMechanic(eje)`; el objetivo es un ángulo enviado, no medido. Configurar correctamente vuelve a objetivo -1 sin mover. Los avisos de cada eje son independientes. `diagnostico()` solo es el último texto de operación; usa `diagnosticoMechanic(eje)` para ese eje.
+
+Solo S1/S2; dos ejes ocupan los dos puertos. Los cinco perfiles posibles no pueden coexistir físicamente a la vez. Quitar configuración libera la asignación lógica, no desconecta energía ni mueve el servo. Probar ambos ejes por separado sin carga, verificar espacio libre y registrar extremos medidos antes de combinarlos.

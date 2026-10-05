@@ -6,3 +6,13 @@
 - Acciones explícitas de robot y mando, sensores, faros y perfiles Mechanic calibrables.
 - Ejemplos separados, con radio nativa de MakeCode donde corresponde.
 - La compatibilidad física y las calibraciones de accesorios están pendientes.
+
+## Actualización local H01–H12 (sin release)
+
+- Caducidad independiente de ejes de Radio y recuperación sin reutilizar muestras.
+- Eventos GamePad en fibras cooperativas con multiplicidad/reentrancia acotadas, roles exclusivos y zona muerta por semieje.
+- Protocolo ultrasónico contrastado con controlador fijado; RGB fuera de alcance y API antigua oculta con diagnóstico.
+- Estado/resultado/perfil/objetivo por eje y elevación de pinza independiente.
+- 24 ejemplos completos, herramientas fijadas, pruebas de integración, CI creado y exportación `.mkcd` importable en web.
+- Conservados 35 IDs históricos; 53 IDs únicos en total. API `girar` oculta/deprecada; nuevo giro izquierda/derecha. No se cambia el significado de enums existentes.
+- Resultados y pendientes concretos: `docs/revision-h01-h12.md`. Sin ensayo físico ni publicación.

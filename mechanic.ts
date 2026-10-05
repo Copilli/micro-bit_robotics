@@ -5,9 +5,11 @@ namespace copilli {
         lowAngle: number
         highAngle: number
         frontAngle: number
+        targetAngle: number
     }
 
     let servoProfiles: ServoProfile[] = []
+    let configurationResults: string[] = ["No solicitada", "No solicitada", "No solicitada", "No solicitada", "No solicitada"]
 
     function validAngle(angle: number): boolean {
         return angle == Math.round(angle) && angle >= 10 && angle <= 170
@@ -20,15 +22,23 @@ namespace copilli {
         return null
     }
 
+    function rejectConfiguration(mechanism: number, reason: string): void {
+        let notice = "Calibracion rechazada: " + reason
+        if (findProfile(mechanism) != null) notice += "; continúa vigente la anterior"
+        else notice += "; no hay perfil vigente"
+        configurationResults[mechanism] = notice
+        copilliDiagnostics.setMechanic(mechanism, notice)
+    }
+
     function configureProfile(mechanism: number, port: PuertoServo, lowAngle: number, highAngle: number, frontAngle?: number): void {
         if (!validAngle(lowAngle) || !validAngle(highAngle) || lowAngle == highAngle) {
-            copilliDiagnostics.set("Calibracion rechazada: usa dos angulos distintos entre 10 y 170.")
+            rejectConfiguration(mechanism, "usa dos ángulos distintos entre 10 y 170")
             return
         }
         if (frontAngle == null) frontAngle = lowAngle
         for (let i = 0; i < servoProfiles.length; i++) {
             if (servoProfiles[i].port == port && servoProfiles[i].mechanism != mechanism) {
-                copilliDiagnostics.set("Ese puerto ya tiene otro mecanismo. Quita su configuración antes de reemplazarla.")
+                rejectConfiguration(mechanism, "ese puerto ya tiene otro mecanismo; quita su configuración antes de reemplazarla")
                 return
             }
         }
@@ -41,29 +51,32 @@ namespace copilli {
             port: port,
             lowAngle: lowAngle,
             highAngle: highAngle,
-            frontAngle: frontAngle
+            frontAngle: frontAngle,
+            targetAngle: -1
         })
-        copilliDiagnostics.set("")
+        configurationResults[mechanism] = "Configuración aceptada; perfil vigente actualizado sin movimiento"
+        copilliDiagnostics.setMechanic(mechanism, "")
     }
 
     function moveMechanism(mechanism: number, percentage: number): void {
         let profile = findProfile(mechanism)
         if (profile == null) {
-            copilliDiagnostics.set("Accion segura: falta configurar y calibrar este accesorio.")
+            copilliDiagnostics.setMechanic(mechanism, "Acción segura: falta configurar y calibrar este accesorio.")
             return
         }
         if (!copilliRobotIsReady()) {
-            copilliDiagnostics.set("Prepara Maqueen antes de mover un servo; no se envio ningun angulo.")
+            copilliDiagnostics.setMechanic(mechanism, "Prepara Maqueen antes de mover un servo; no se envió ningún ángulo.")
             return
         }
         let angle = copilliLogic.angleBetween(profile.lowAngle, profile.highAngle, percentage)
         copilliHardware.setServo(profile.port, angle)
-        copilliDiagnostics.set("")
+        profile.targetAngle = angle
+        copilliDiagnostics.setMechanic(mechanism, "")
     }
 
     function configureMechanic(mechanism: number, port: PuertoServo, low: number, high: number): void {
         if (port != PuertoServo.S1 && port != PuertoServo.S2) {
-            copilliDiagnostics.set("Puerto Mechanic no válido.")
+            rejectConfiguration(mechanism, "puerto Mechanic no válido")
             return
         }
         configureProfile(mechanism, port, low, high)
@@ -78,6 +91,20 @@ namespace copilli {
     export function configurarPinza(puerto: PuertoServo, anguloAbierta: number, anguloCerrada: number): void {
         configureMechanic(Mecanismo.Pinza, puerto, anguloCerrada, anguloAbierta)
     }
+
+    /** Elevación opcional, independiente de apertura. Configurar no mueve. */
+    //% blockId=copilli_configurar_elevacion_pinza block="configurar elevación de pinza en %puerto baja %anguloBaja alta %anguloAlta"
+    //% anguloBaja.min=10 anguloBaja.max=170 anguloAlta.min=10 anguloAlta.max=170
+    //% group="Avanzado" advanced=true
+    export function configurarElevacionPinza(puerto: PuertoServo, anguloBaja: number, anguloAlta: number): void {
+        configureMechanic(4, puerto, anguloBaja, anguloAlta)
+    }
+    //% blockId=copilli_subir_pinza block="subir pinza"
+    //% group="Mechanic" weight=94
+    export function subirPinza(): void { moveMechanism(4, 100) }
+    //% blockId=copilli_bajar_pinza block="bajar pinza"
+    //% group="Mechanic" weight=93
+    export function bajarPinza(): void { moveMechanism(4, 0) }
 
     /**
      * Configura pala Loader: ángulo baja y ángulo alta, sin mover el servo.
@@ -108,11 +135,11 @@ namespace copilli {
     export function configurarSensorGiratorio(puerto: PuertoServo, izquierda: number, frente: number, derecha: number): void {
         if (!validAngle(izquierda) || !validAngle(frente) || !validAngle(derecha) ||
             izquierda == frente || izquierda == derecha || frente == derecha) {
-            copilliDiagnostics.set("Calibracion rechazada: usa tres angulos distintos entre 10 y 170.")
+            rejectConfiguration(3, "usa tres ángulos distintos entre 10 y 170")
             return
         }
         if (puerto != PuertoServo.S1 && puerto != PuertoServo.S2) {
-            copilliDiagnostics.set("Puerto Mechanic no válido.")
+            rejectConfiguration(3, "puerto Mechanic no válido")
             return
         }
         configureProfile(3, puerto, izquierda, derecha, frente)
@@ -125,7 +152,12 @@ namespace copilli {
     //% group="Avanzado" weight=80 advanced=true
     export function quitarConfiguracionMechanic(puerto: PuertoServo): void {
         for (let i = servoProfiles.length - 1; i >= 0; i--) {
-            if (servoProfiles[i].port == puerto) servoProfiles.removeAt(i)
+            if (servoProfiles[i].port == puerto) {
+                let mechanism = servoProfiles[i].mechanism
+                servoProfiles.removeAt(i)
+                configurationResults[mechanism] = "Configuración retirada; no hay perfil vigente"
+                copilliDiagnostics.setMechanic(mechanism, "")
+            }
         }
     }
 
@@ -191,23 +223,24 @@ namespace copilli {
     export function orientarSensor(direccion: DireccionSensor): void {
         let profile = findProfile(3)
         if (profile == null) {
-            copilliDiagnostics.set("Accion segura: falta configurar y calibrar el sensor giratorio Push.")
+            copilliDiagnostics.setMechanic(3, "Accion segura: falta configurar y calibrar el sensor giratorio Push.")
             return
         }
         if (!copilliRobotIsReady()) {
-            copilliDiagnostics.set("Prepara Maqueen antes de mover un servo; no se envio ningun angulo.")
+            copilliDiagnostics.setMechanic(3, "Prepara Maqueen antes de mover un servo; no se envio ningun angulo.")
             return
         }
         if (direccion != DireccionSensor.Izquierda && direccion != DireccionSensor.Frente &&
             direccion != DireccionSensor.Derecha) {
-            copilliDiagnostics.set("Direccion del sensor no valida; no se envio ningun angulo.")
+            copilliDiagnostics.setMechanic(3, "Direccion del sensor no valida; no se envio ningun angulo.")
             return
         }
         let angle = profile.lowAngle
         if (direccion == DireccionSensor.Frente) angle = profile.frontAngle
         else if (direccion == DireccionSensor.Derecha) angle = profile.highAngle
         copilliHardware.setServo(profile.port, angle)
-        copilliDiagnostics.set("")
+        profile.targetAngle = angle
+        copilliDiagnostics.setMechanic(3, "")
     }
 
     /**
@@ -218,10 +251,38 @@ namespace copilli {
     //% group="Avanzado" weight=75 advanced=true
     export function posicionMechanic(mecanismo: Mecanismo, porcentaje: number): void {
         if (porcentaje != porcentaje) {
-            copilliDiagnostics.set("Porcentaje Mechanic no valido; no se envio ningun angulo.")
+            copilliDiagnostics.setMechanic(mecanismo, "Porcentaje Mechanic no válido; no se envió ningún ángulo.")
             return
         }
         moveMechanism(mecanismo, copilliLogic.limit(porcentaje, 0, 100))
     }
 
+    /** Consulta sin hardware: -1 significa sin perfil o sin objetivo enviado. */
+    //% blockId=copilli_mechanic_configurado block="%eje configurado"
+    //% group="Avanzado" advanced=true
+    export function mechanicConfigurado(eje: EjeMechanic): boolean { return findProfile(eje) != null }
+    //% blockId=copilli_puerto_mechanic block="puerto vigente de %eje (0 S1, 1 S2)"
+    //% group="Avanzado" advanced=true
+    export function puertoMechanic(eje: EjeMechanic): number {
+        let profile = findProfile(eje)
+        return profile == null ? -1 : profile.port
+    }
+    //% blockId=copilli_objetivo_mechanic block="último ángulo enviado a %eje"
+    //% group="Avanzado" advanced=true
+    export function objetivoMechanic(eje: EjeMechanic): number {
+        let profile = findProfile(eje)
+        return profile == null ? -1 : profile.targetAngle
+    }
+    //% blockId=copilli_perfil_mechanic block="perfil vigente de %eje"
+    //% group="Avanzado" advanced=true
+    export function perfilMechanic(eje: EjeMechanic): string {
+        let profile = findProfile(eje)
+        if (profile == null) return "Sin perfil"
+        return "S" + (profile.port + 1) + ": " + profile.lowAngle + "/" + profile.frontAngle + "/" + profile.highAngle
+    }
+    //% blockId=copilli_resultado_configuracion_mechanic block="resultado de configurar %eje"
+    //% group="Avanzado" advanced=true
+    export function resultadoConfiguracionMechanic(eje: EjeMechanic): string {
+        return eje >= 0 && eje <= 4 ? configurationResults[eje] : "Eje no válido"
+    }
 }

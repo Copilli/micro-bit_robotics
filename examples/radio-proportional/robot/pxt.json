@@ -1,8 +1,9 @@
 {
-    "name": "copilli-radio-proporcional-robot",
+    "name": "robotics-radio-proporcional-robot",
     "dependencies": {
         "core": "*",
-        "copilli-robotica": "file:../../.."
+        "radio": "*",
+        "robotics": "file:../../.."
     },
     "files": [
         "main.ts"

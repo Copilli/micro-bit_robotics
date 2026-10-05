@@ -7,21 +7,27 @@ let yaDetenidoPorTimeout = true
 
 // Un solo manejador centraliza todos los mensajes; mensajes desconocidos no renuevan el plazo.
 radio.onReceivedString(function (mensaje) {
+    let ordenConduccion = false
     if (mensaje == "avanzar") {
         copilli.avanzar(40)
+        ordenConduccion = true
     } else if (mensaje == "retroceder") {
         copilli.retroceder(40)
+        ordenConduccion = true
     } else if (mensaje == "izquierda") {
-        copilli.girar(copilli.Lado.Izquierda, 35)
+        copilli.girarHacia(copilli.DireccionGiro.Izquierda, 35)
+        ordenConduccion = true
     } else if (mensaje == "derecha") {
-        copilli.girar(copilli.Lado.Derecha, 35)
+        copilli.girarHacia(copilli.DireccionGiro.Derecha, 35)
+        ordenConduccion = true
     } else if (mensaje == "parar") {
         copilli.detener()
-    } else {
-        return
+        ordenConduccion = true
     }
-    ultimaOrdenValida = control.millis()
-    yaDetenidoPorTimeout = mensaje == "parar"
+    if (ordenConduccion) {
+        ultimaOrdenValida = control.millis()
+        yaDetenidoPorTimeout = mensaje == "parar"
+    }
 })
 
 basic.forever(function () {

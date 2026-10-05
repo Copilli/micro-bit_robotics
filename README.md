@@ -1,47 +1,53 @@
-# pxt-copilli-robotica
+# Robotics: Maqueen, GamePad DFRobot y Maqueen Mechanic
 
-Extensión MakeCode/PXT para micro:bit con bloques en español bajo el namespace `copilli`. La categoría ofrece acciones de robot, sensores, luces, GamePad y Mechanic; Radio, pantalla, botones A/B, sonido, logo táctil, pausas y ciclos siguen siendo los bloques nativos de micro:bit.
-
-## Instalación en MakeCode
-
-El repositorio aún no está publicado en una URL pública autorizada. Por eso **todavía no hay enlace real que pegar en Extensiones** y no se debe asumir que aparece en búsqueda por nombre. Una vez publicada una versión y autorizado el repositorio, se podrá importar con un único enlace GitHub.
+Extensión MakeCode/PXT con bloques en español bajo `copilli`. Robot, sensores externos, faros, GamePad y Mechanic se combinan con Radio, pantalla, A/B, sonido, logo, sensores integrados, pausas y ciclos **nativos**. Producción no administra Radio.
 
 ## Perfiles y preparación
 
-- Firmware destino: micro:bit V2 (sin ensayo físico).
-- Robot de referencia: Maqueen Lite clásico/v4; no se afirma compatibilidad con Lite v5, Plus o Plus V2.
-- Mando de referencia: GamePad DFR0536 V4 con joystick. El pinout de esta revisión no se pudo contrastar con la guía oficial accesible y requiere confirmación física.
-- Mechanic: Beetle, Loader, Forklift y Push con servo calibrado en S1/S2. El accesorio, el puerto y los ángulos se preparan por separado en cada programa del robot.
+- Destino micro:bit V2; referencias Maqueen Lite clásico/v4 y DFR0536 V2 de botones o V4 con joystick. No se declaran compatibles otras revisiones.
+- Inicio explícito en **Preparación**: el primer `iniciarMaqueen()` detiene ruedas; `iniciarGamepad()` prepara entradas y un solo sondeo.
+- Roles exclusivos por programa: el segundo se rechaza antes de tocar hardware. Repetir el mismo inicio es idempotente y no vuelve a detener un robot ya preparado. Mando y receptor se descargan a micro:bits distintos.
+- Importar y configurar no actúa sobre hardware. Los perfiles están en RAM, sin persistencia ni realimentación de posición.
+- Mechanic requiere [calibración del profesor](docs/mechanic-calibracion.md). Los ceros de las plantillas se rechazan deliberadamente. El filtro 10°–170° no garantiza un recorrido seguro.
 
-Antes de usar mecanismos, el profesor debe seguir [preparación y calibración](docs/mechanic-calibracion.md), registrar perfil, identificar cada puerto y medir extremos seguros sin carga. Las plantillas incluyen ceros rechazados a propósito: reemplazarlos únicamente por mediciones reales bajo supervisión. No hay persistencia al apagar ni confirmación de que el servo alcanzó el objetivo.
+## Bloques
 
-`iniciarMaqueen()` prepara solo el robot y detiene ruedas; `iniciarGamepad()` prepara solo el mando. La importación no mueve motores ni servos, inicia radio o toca salidas. Los programas de mando y robot se descargan a micro:bits distintos.
+Robot: avanzar, retroceder, girar izquierda/derecha y detener; potencia 0–100 es escala del controlador. Sensores: distancia (`-1` sin eco válido) y línea. Luces: faros delanteros. **RGB ambiental no está implementado**; sus APIs antiguas están ocultas/deprecadas, con diagnóstico explícito. Esto no significa que Lite carezca de RGB.
 
-## Bloques principales
+GamePad: cuatro botones de dirección y X/Y en V2 (mando escolar), o joystick y C/D/E/F/Z en V4. Vibración P12; solo V4 comparte esa salida con LED. Varios manejadores del mismo evento se conservan; cada uno tiene como máximo una ejecución activa y descarta repeticiones mientras está ocupado. Hasta 32 registros. Una fibra cooperativa no neutraliza un bucle que nunca cede ejecución.
 
-- Robot: `avanzar`, `retroceder`, `girar`, `detener`; potencia 0–100 es escala de controlador, no velocidad real.
-- Sensores: `distanciaCm()` retorna `-1` sin eco válido; `sobreLinea(...)` identifica negro según polaridad pendiente de probar.
-- Luces: `faros(...)`; el perfil Lite clásico/v4 no expone RGB inferior, así que los bloques RGB registran diagnóstico y no escriben pines.
-- GamePad: dirección de joystick, consulta y eventos antirrebote para C/D/E/F/Z, vibración. A/B se conservan nativos.
-- Mechanic: abrir/cerrar pinza, subir/bajar pala y horquillas, orientar sensor Push. Configuraciones de calibración viven en RAM del programa, no mueven el servo y requieren límites físicos medidos.
-- Avanzado: ruedas proporcionales, centro/zona muerta, posición semántica, configuración de puerto y `diagnostico()`.
+Mechanic: abrir/cerrar pinza, **subir/bajar pinza mediante un eje independiente**, subir/bajar pala y horquillas, orientar ultrasónico Push. Configuración y diagnóstico están en Avanzado. S1 elevación/S2 apertura es referencia histórica de Plus original, sin garantía mecánica de Lite.
 
-Lee [API y hardware](docs/api.md), [compatibilidad](docs/compatibilidad.md), [fuentes inspeccionadas](docs/fuentes.md) y [pruebas físicas pendientes](docs/pruebas-fisicas.md). No se incluye control Bluetooth, infrarrojo, HUSKYLENS, buzzer externo ni comandos de radio propios.
+Consulta [API](docs/api.md), [compatibilidad](docs/compatibilidad.md), [fuentes](docs/fuentes.md), [pruebas físicas pendientes](docs/pruebas-fisicas.md) y [trazabilidad H01–H12](docs/revision-h01-h12.md).
 
-## Ejemplos
+## Ejemplos e importación web
 
-Cada proyecto está separado en [`examples/`](examples/README.md). Las parejas de radio tienen una carpeta `controller` y otra `robot`: son dos programas. Los ejemplos llaman explícitamente a `radio.setGroup`, usan `radio.sendString` / `radio.sendValue` y eventos de recepción nativos; sus grupos no autentican. La extensión local está indicada como dependencia relativa y debe probarse con PXT CLI.
+Hay 24 proyectos independientes; [índice e importación](examples/README.md). Las parejas `controller`/`robot` son dos programas. Cada ejemplo con Radio nativa declara su dependencia.
 
-## Compilar, probar y publicar
+Todavía no hay URL pública autorizada que pegar en Extensiones. Se conserva una sola extensión raíz; los `.mkcd` exportados incluyen una copia de sus fuentes para permitir importación sin dependencia `file:` ni publicación previa. Tras ejecutar `npm run export:web`, en [MakeCode micro:bit](https://makecode.microbit.org) selecciona **Importar → Abrir archivos desde tu equipo**, carga el archivo de `output/makecode/` y confirma. Calibra Mechanic antes de descargar a una placa. Las carpetas CLI con dependencias `file:` no se importan directamente en el editor web.
 
-Node se usa únicamente para herramientas. Con Node.js y npm:
+## Desarrollo reproducible
+
+Comprobado: Node 24.16.0, npm 11.13.0; wrapper `pxt` 0.5.1; **pxt-microbit 8.0.22**, **pxt-core 12.0.19**; TypeScript auxiliar 5.9.3. Target y transitivas están fijados en `package-lock.json`; `targetVersions` solo aporta metadatos.
 
 ```sh
 npm ci
-npx pxt target microbit
+npm run setup:pxt
 npx pxt install
 npm test
-npm run build
+npm run validate:pxt
+npm run test:sim
+npm run export:web
 ```
 
-Se fija el CLI PXT `0.5.1` en `package.json`/`package-lock.json`; `targetVersions.target: 8.0.22` registra compatibilidad. El paquete compilador del destino se instala aparte con `pxt target microbit`, así que no está bloqueado en este lockfile. Ejecuta `npx pxt install && npx pxt build` en una carpeta de ejemplo para probarla localmente. No se generaron `.hex`, proyectos compartidos ni enlaces de publicación en este repositorio. Para publicar una versión se necesita un repositorio remoto autorizado, versionado y aprobación del propietario; consulta la documentación oficial de [versionado PXT](https://makecode.com/extensions/versioning).
+En PowerShell usa `npm.cmd`/`npx.cmd` si se bloquean `.ps1`. Este equipo necesitó `NODE_OPTIONS=--use-system-ca` para usar certificados del sistema sin desactivar TLS. No sustituyas el target fijado con `pxt target microbit`.
+
+`npm test` prueba las fuentes reales con dobles auxiliares y una prueba con compilador, simulador y fibras PXT reales. `validate:pxt` instala y compila raíz/pruebas y cada ejemplo, decompila los 24 ejemplos y rechaza bloques grises. Informes: `built/validation/`. `pxt test` solo compila; `pxt run` ejecuta `test.ts` en simulador.
+
+El editor web usa microbit 9.0.12/PXT 13.0.9 y se valida por separado. Compilar, convertir bloques o simular no demuestra funcionamiento físico. CI está creado, sin ejecución remota. Los avisos de herramientas de `npm audit` siguen pendientes de evaluación antes de publicación.
+
+No se hicieron commits, push, PR, releases ni publicación. Antes de distribuir a alumnos: identificar y probar físicamente cada montaje bajo supervisión. Antes de publicar: revisar herramientas, CI remoto e importación mediante el enlace autorizado.
+
+Para instalar sin descargar el navegador auxiliar de Puppeteer: en PowerShell establece `$env:PUPPETEER_SKIP_DOWNLOAD='true'` antes de `npm.cmd ci`; en bash usa `PUPPETEER_SKIP_DOWNLOAD=true npm ci`. Esa instalación sí se completó. El navegador auxiliar no se utiliza para compilar.
+
+**Cierre solicitado sin más pruebas:** la última adaptación de nombre y mando escolar no tiene una validación final completa. Los resultados anteriores no se trasladan automáticamente a esta revisión; consulta la trazabilidad.

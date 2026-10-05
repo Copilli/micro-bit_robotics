@@ -1,11 +1,19 @@
 {
-    "name": "pxt-copilli-robotica",
+    "name": "pxt-robotics",
     "private": true,
     "scripts": {
+        "setup:pxt": "node scripts/setup-pxt.cjs",
+        "test": "node --test tests/*.test.cjs",
+        "test:pxt": "pxt test",
         "build": "pxt build",
-        "test": "pxt test"
+        "validate:pxt": "node scripts/validate-pxt.cjs",
+        "export:web": "node scripts/export-web.cjs",
+        "reproduce:baseline": "node scripts/reproduce-baseline.cjs",
+        "test:sim": "pxt run"
     },
     "devDependencies": {
-        "pxt": "0.5.1"
+        "pxt": "0.5.1",
+        "pxt-microbit": "8.0.22",
+        "typescript": "5.9.3"
     }
 }
