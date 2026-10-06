@@ -31,7 +31,7 @@ namespace copilli {
      */
     //% blockId=copilli_avanzar block="avanzar a potencia %potencia \\%"
     //% potencia.min=0 potencia.max=100 potencia.defl=40
-    //% group="Robot" weight=100
+    //% group="Robot" weight=100 advanced=true
     export function avanzar(potencia: number): void {
         let power = copilliLogic.limit(potencia, 0, 100)
         moverRuedas(power, power)
@@ -42,7 +42,7 @@ namespace copilli {
      */
     //% blockId=copilli_retroceder block="retroceder a potencia %potencia \\%"
     //% potencia.min=0 potencia.max=100 potencia.defl=40
-    //% group="Robot" weight=95
+    //% group="Robot" weight=95 advanced=true
     export function retroceder(potencia: number): void {
         let power = copilliLogic.limit(potencia, 0, 100)
         moverRuedas(-power, -power)
@@ -70,6 +70,7 @@ namespace copilli {
     //% blockId=copilli_detener block="detener robot"
     //% group="Robot" weight=85
     export function detener(): void {
+        copilliMotion.cancel()
         if (!maqueenReady) {
             reportNotReady("Maqueen")
             return
@@ -86,22 +87,13 @@ namespace copilli {
     //% derecha.min=-100 derecha.max=100 derecha.defl=40
     //% group="Robot" weight=20 advanced=true
     export function moverRuedas(izquierda: number, derecha: number): void {
+        copilliMotion.cancel()
         if (!maqueenReady) {
             reportNotReady("Maqueen")
             return
         }
-        writeWheel(true, copilliLogic.limit(izquierda, -100, 100))
-        writeWheel(false, copilliLogic.limit(derecha, -100, 100))
+        copilliMotion.write(izquierda, derecha)
         copilliDiagnostics.setRobot("")
-    }
-
-    function writeWheel(left: boolean, signedPower: number): void {
-        if (signedPower == 0) {
-            copilliHardware.driveMotor(left, 0, 0)
-            return
-        }
-        let speed = Math.round(Math.abs(signedPower) * 255 / 100)
-        copilliHardware.driveMotor(left, signedPower < 0 ? 1 : 0, speed)
     }
 
     /**
@@ -164,7 +156,7 @@ namespace copilli {
     /** Giro infantil con dos direcciones. La API girar antigua sigue disponible. */
     //% blockId=copilli_girar_direccion block="girar hacia %direccion a potencia %potencia \\%"
     //% potencia.min=0 potencia.max=100 potencia.defl=40
-    //% group="Robot" weight=90
+    //% group="Robot" weight=90 advanced=true
     export function girarHacia(direccion: DireccionGiro, potencia: number): void {
         girar(<Lado><number>direccion, potencia)
     }

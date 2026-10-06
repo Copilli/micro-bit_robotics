@@ -6,9 +6,12 @@ namespace copilli {
         highAngle: number
         frontAngle: number
         targetAngle: number
+        operation: number
     }
 
     let servoProfiles: ServoProfile[] = []
+    let globalSpeed = 0
+    let axisSpeeds: number[] = [-1, -1, -1, -1, -1]
     let configurationResults: string[] = ["No solicitada", "No solicitada", "No solicitada", "No solicitada", "No solicitada"]
 
     function validAngle(angle: number): boolean {
@@ -52,7 +55,8 @@ namespace copilli {
             lowAngle: lowAngle,
             highAngle: highAngle,
             frontAngle: frontAngle,
-            targetAngle: -1
+            targetAngle: -1,
+            operation: 0
         })
         configurationResults[mechanism] = "Configuración aceptada; perfil vigente actualizado sin movimiento"
         copilliDiagnostics.setMechanic(mechanism, "")
@@ -68,10 +72,46 @@ namespace copilli {
             copilliDiagnostics.setMechanic(mechanism, "Prepara Maqueen antes de mover un servo; no se envió ningún ángulo.")
             return
         }
-        let angle = copilliLogic.angleBetween(profile.lowAngle, profile.highAngle, percentage)
-        copilliHardware.setServo(profile.port, angle)
-        profile.targetAngle = angle
+        let angle = percentageAngle(profile, percentage)
+        moveAngle(profile, angle, false)
+    }
+
+    function validAxis(axis: number): boolean { return axis >= 0 && axis <= 4 && axis == Math.round(axis) }
+    function percentageAngle(profile: ServoProfile, percentage: number): number {
+        if (profile.mechanism == 3) {
+            if (percentage <= 50) return copilliLogic.angleBetween(profile.lowAngle, profile.frontAngle, percentage * 2)
+            return copilliLogic.angleBetween(profile.frontAngle, profile.highAngle, (percentage - 50) * 2)
+        }
+        return copilliLogic.angleBetween(profile.lowAngle, profile.highAngle, percentage)
+    }
+    function moveAngle(profile: ServoProfile, angle: number, initial: boolean): void {
+        let mechanism = profile.mechanism
+        profile.operation++
+        let id = profile.operation
+        let speed = axisSpeeds[mechanism] < 0 ? globalSpeed : axisSpeeds[mechanism]
+        if (speed > 0 && profile.targetAngle < 0 && !initial) {
+            copilliDiagnostics.setMechanic(mechanism, "Establece la posición inicial antes del movimiento gradual; posición real desconocida.")
+            return
+        }
         copilliDiagnostics.setMechanic(mechanism, "")
+        if (initial || speed == 0) {
+            copilliHardware.setServo(profile.port, angle)
+            profile.targetAngle = angle
+            return
+        }
+        let startAngle = profile.targetAngle
+        let duration = Math.abs(angle - startAngle) * 1000 / (speed * 1.8)
+        let started = control.millis()
+        while (findProfile(mechanism) == profile && profile.operation == id) {
+            let elapsed = control.millis() - started
+            let next = duration == 0 ? angle : Math.round(startAngle + (angle - startAngle) * Math.min(1, elapsed / duration))
+            if (next != profile.targetAngle) {
+                copilliHardware.setServo(profile.port, next)
+                profile.targetAngle = next
+            }
+            if (elapsed >= duration) return
+            basic.pause(20)
+        }
     }
 
     function configureMechanic(mechanism: number, port: PuertoServo, low: number, high: number): void {
@@ -238,9 +278,7 @@ namespace copilli {
         let angle = profile.lowAngle
         if (direccion == DireccionSensor.Frente) angle = profile.frontAngle
         else if (direccion == DireccionSensor.Derecha) angle = profile.highAngle
-        copilliHardware.setServo(profile.port, angle)
-        profile.targetAngle = angle
-        copilliDiagnostics.setMechanic(3, "")
+        moveAngle(profile, angle, false)
     }
 
     /**
@@ -250,11 +288,67 @@ namespace copilli {
     //% porcentaje.min=0 porcentaje.max=100 porcentaje.defl=50
     //% group="Avanzado" weight=75 advanced=true
     export function posicionMechanic(mecanismo: Mecanismo, porcentaje: number): void {
-        if (porcentaje != porcentaje) {
+        if (!copilliMotion.finite(porcentaje)) {
             copilliDiagnostics.setMechanic(mecanismo, "Porcentaje Mechanic no válido; no se envió ningún ángulo.")
             return
         }
         moveMechanism(mecanismo, copilliLogic.limit(porcentaje, 0, 100))
+    }
+
+    /** Posición entre extremos calibrados. Push: 0 izquierda, 50 frente, 100 derecha. */
+    //% blockId=copilli_poner_eje_mechanic block="poner %eje en %porcentaje \\%"
+    //% porcentaje.min=0 porcentaje.max=100 porcentaje.defl=50
+    //% group="Mechanic" weight=110
+    export function ponerEjeMechanic(eje: EjeMechanic, porcentaje: number): void {
+        if (!validAxis(eje) || !copilliMotion.finite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+            copilliDiagnostics.setMechanic(eje, "Posición rechazada: eje válido y porcentaje entre 0 y 100."); return
+        }
+        moveMechanism(eje, porcentaje)
+    }
+    /** Envía directamente la posición inicial calibrada; no mide la posición real. */
+    //% blockId=copilli_posicion_inicial_mechanic block="establecer posición inicial de %eje en %porcentaje \\%"
+    //% porcentaje.min=0 porcentaje.max=100 porcentaje.defl=50
+    //% group="Preparación" weight=90
+    export function establecerPosicionInicialMechanic(eje: EjeMechanic, porcentaje: number): void {
+        if (!validAxis(eje) || !copilliMotion.finite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+            copilliDiagnostics.setMechanic(eje, "Posición inicial rechazada: eje válido y porcentaje entre 0 y 100."); return
+        }
+        let profile = findProfile(eje)
+        if (profile == null || !copilliRobotIsReady()) {
+            copilliDiagnostics.setMechanic(eje, "Prepara Maqueen y configura el eje antes de establecer posición inicial."); return
+        }
+        moveAngle(profile, percentageAngle(profile, porcentaje), true)
+    }
+    /** Rapidez de trayectoria ordenada: 1–100% equivale a 1,8–180 grados/s, no velocidad física medida. */
+    //% blockId=copilli_rapidez_mechanic block="fijar rapidez de Mechanic a %rapidez \\%"
+    //% rapidez.min=1 rapidez.max=100 rapidez.defl=50
+    //% group="Preparación" weight=91
+    export function fijarRapidezMechanic(rapidez: number): void {
+        if (!copilliMotion.finite(rapidez) || rapidez < 1 || rapidez > 100) {
+            copilliDiagnostics.set("Rapidez rechazada: usa 1–100%."); return
+        }
+        globalSpeed = rapidez
+        copilliDiagnostics.set("")
+    }
+    /** Ajuste por eje: -1 usa global, 0 inmediato, 1–100 gradual. No mueve. */
+    //% blockId=copilli_rapidez_eje_mechanic block="rapidez de %eje %rapidez (-1 global, 0 inmediato)"
+    //% rapidez.min=-1 rapidez.max=100 rapidez.defl=-1
+    //% group="Avanzado" advanced=true
+    export function configurarRapidezEjeMechanic(eje: EjeMechanic, rapidez: number): void {
+        if (!validAxis(eje) || !copilliMotion.finite(rapidez) || rapidez < -1 || rapidez > 100 || (rapidez > -1 && rapidez < 0) || (rapidez > 0 && rapidez < 1)) {
+            copilliDiagnostics.setMechanic(eje, "Rapidez rechazada: -1 global, 0 inmediato o 1–100%."); return
+        }
+        axisSpeeds[eje] = rapidez
+        copilliDiagnostics.setMechanic(eje, "")
+    }
+    /** Cancela pasos futuros; conserva el último ángulo enviado, sin liberar ni desconectar el servo. */
+    //% blockId=copilli_detener_eje_mechanic block="detener movimiento de %eje"
+    //% group="Mechanic" weight=65
+    export function detenerMovimientoMechanic(eje: EjeMechanic): void {
+        if (!validAxis(eje)) { copilliDiagnostics.set("Eje Mechanic no válido."); return }
+        let profile = findProfile(eje)
+        if (profile != null) profile.operation++
+        copilliDiagnostics.setMechanic(eje, "")
     }
 
     /** Consulta sin hardware: -1 significa sin perfil o sin objetivo enviado. */

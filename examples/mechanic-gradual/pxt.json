@@ -1,0 +1,17 @@
+{
+    "name": "robotics-ejemplo-mechanic-gradual",
+    "dependencies": {
+        "core": "*",
+        "robotics": "file:../.."
+    },
+    "files": [
+        "main.ts"
+    ],
+    "targetVersions": {
+        "target": "8.0.22",
+        "targetId": "microbit"
+    },
+    "supportedTargets": [
+        "microbit"
+    ]
+}

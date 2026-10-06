@@ -6,7 +6,7 @@ function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){cons
 walk(path.join(root,'examples'));
 const report={node:process.version,target:require('pxt-microbit/package.json').version,pxt:require('pxt-core/package.json').version,projects:[]};
 let failures=0;
-function command(dir,args){const r=spawnSync(process.execPath,[require.resolve('pxt/cli.js'),...args],{cwd:dir,encoding:'utf8',env:process.env,timeout:120000});return {command:`pxt ${args.join(' ')}`,status:r.status,error:r.error?.message,output:(r.stdout||'')+(r.stderr||'')};}
+function command(dir,args){const v2Test=args[0]==='test';const cliArgs=v2Test?[path.join(root,'scripts/test-pxt-v2.cjs')]:[require.resolve('pxt/cli.js'),...args];const r=spawnSync(process.execPath,cliArgs,{cwd:dir,encoding:'utf8',env:process.env,timeout:120000});return {command:v2Test?'pxt test (micro:bit V2)':`pxt ${args.join(' ')}`,status:r.status,error:r.error?.message,output:(r.stdout||'')+(r.stderr||'')};}
 for(const dir of [root,...projects]){
     const relative=path.relative(root,dir)||'.';const entry={project:relative,commands:[]};
     entry.commands.push(command(dir,['install']));entry.commands.push(command(dir,['build']));

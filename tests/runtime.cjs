@@ -9,13 +9,17 @@ const program = ts.createProgram(files, { target: ts.ScriptTarget.ES2017, module
 const emitted = [];
 program.emit(undefined, (file, source) => { if (file.endsWith('.js')) emitted.push(source); });
 
-function runtime() {
+function runtime(options = {}) {
     const log = [], loops = [], queue = [];
     const digital = {}, analog = { 1: 512, 2: 512 };
-    let now = 0, pulse = 0, pauseHook;
+    let now = 0, pulse = 0, pauseHook, heading = 0, headingHook;
     const ctx = vm.createContext({
         DigitalPin: { P1:1, P2:2, P8:8, P12:12, P13:13, P14:14, P15:15, P16:16 },
         AnalogPin: { P1:1, P2:2 }, PinPullMode: { PullNone:0, PullUp:1 }, PulseValue: { High:1, Low:0 },
+        input: {
+            compassHeading: () => headingHook ? headingHook() : heading,
+            calibrateCompass: () => log.push(['calibrateCompass'])
+        },
         pins: {
             createBuffer: n => new Uint8Array(n),
             i2cWriteBuffer: (address, buffer) => log.push(['i2c', address, [...buffer]]),
@@ -27,7 +31,7 @@ function runtime() {
         },
         basic: {
             forever: fn => loops.push(fn),
-            pause: ms => { log.push(['pause',ms]); if (pauseHook) pauseHook(ms); }
+            pause: ms => { log.push(['pause',ms]); if (options.advanceTime) now += ms; if (pauseHook) pauseHook(ms); }
         },
         control: {
             millis: () => now,
@@ -41,6 +45,8 @@ function runtime() {
         ctx, api:ctx.copilli, log, loops, queue, digital, analog,
         set time(value) { now = value; }, get time() { return now; },
         set pulse(value) { pulse = value; },
+        set heading(value) { heading = value; }, get heading() { return heading; },
+        set headingHook(value) { headingHook = value; },
         set pauseHook(value) { pauseHook = value; },
         sample(times=3) { for(let i=0;i<times;i++) { now += 10; loops.forEach(fn=>fn()); } },
         flush() { while(queue.length) queue.shift()(); },

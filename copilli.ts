@@ -1,5 +1,23 @@
 //% color=#7B3F98 icon="\uf1b9" block="Robotics" groups='["Preparación","Robot","Sensores","Luces","GamePad","Mechanic","Avanzado"]'
 namespace copilli {
+    export enum DireccionMovimiento {
+        //% block="adelante"
+        Adelante = 0,
+        //% block="atrás"
+        Atras = 1
+    }
+    export enum UnidadMovimiento {
+        //% block="segundos"
+        Segundos = 0,
+        //% block="cm estimados"
+        Centimetros = 1
+    }
+    export enum UnidadGiro {
+        //% block="grados"
+        Grados = 0,
+        //% block="segundos"
+        Segundos = 1
+    }
     export enum Lado {
         //% block="izquierda"
         Izquierda = 0,

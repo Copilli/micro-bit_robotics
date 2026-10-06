@@ -4,7 +4,7 @@
     "scripts": {
         "setup:pxt": "node scripts/setup-pxt.cjs",
         "test": "node --test tests/*.test.cjs",
-        "test:pxt": "pxt test",
+        "test:pxt": "node scripts/test-pxt-v2.cjs",
         "build": "pxt build",
         "validate:pxt": "node scripts/validate-pxt.cjs",
         "export:web": "node scripts/export-web.cjs",

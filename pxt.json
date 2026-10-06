@@ -10,6 +10,7 @@
         "copilli.ts",
         "hardware.ts",
         "diagnostics.ts",
+        "motion.ts",
         "robot.ts",
         "gamepad.ts",
         "mechanic.ts"
