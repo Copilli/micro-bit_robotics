@@ -1,20 +1,25 @@
 # Ejemplos PXT y uso en MakeCode web
 
-24 proyectos independientes. Cada `pxt.json`/`main.ts` es un programa; controller y robot pertenecen a micro:bits separados. Carpetas con dependencia `file:` sirven para el desarrollo CLI local, no para importarlas directamente en el navegador.
+29 proyectos independientes. Cada `pxt.json`/`main.ts` es un programa; controller y robot pertenecen a micro:bits separados. Carpetas con dependencia `file:` sirven para el desarrollo CLI local, no para importarlas directamente en el navegador.
 
 ## Importación sin publicación
 
 1. En la raíz, instala herramientas fijadas y ejecuta `npm run setup:pxt`, `npm run validate:pxt` y `npm run export:web` (véase README).
-2. Se generan 24 archivos `.mkcd` en `output/makecode/`. Cada uno contiene su propio programa, bloques y una copia local de las mismas fuentes de Copilli; no depende de `file:` ni de un GitHub no publicado. Es una instantánea: vuelve a exportar si cambia la extensión.
+2. Se generan 29 archivos `.mkcd` en `output/makecode/`. Cada uno contiene su propio programa, bloques y una copia local de las mismas fuentes de Copilli; no depende de `file:` ni de un GitHub no publicado. Es una instantánea: vuelve a exportar si cambia la extensión.
 3. Abre [MakeCode micro:bit](https://makecode.microbit.org). Selecciona **Importar → Abrir archivos desde tu equipo**, elige el `.mkcd` y confirma. Por ejemplo `radio-loader-controller.mkcd` y `radio-loader-robot.mkcd` son dos proyectos, no un programa combinado.
 4. Revisa puerto/límites con el profesor y sustituye los ceros solo por valores medidos. Importar no reemplaza esta calibración. Descarga al micro:bit correspondiente después de aprobar físicamente el montaje.
 
-Antes del cambio final de nombre/perfil escolar, el editor web importó/convirtió 23 proyectos; la revisión final de 24 proyectos queda pendiente por petición del usuario. evidencia de revisión en `output/playwright/`, trazabilidad en [H01–H12](../docs/revision-h01-h12.md). No hay enlace público de extensión autorizado todavía. Exportar estas instantáneas no publica el repositorio ni crea otra extensión mantenida.
+Los cinco ejemplos nuevos y los 24 anteriores se exportan con las mismas fuentes locales. La versi?n base est? publicada; las mejoras de esta revisi?n requieren importaci?n local hasta autorizar su publicaci?n. Consulta [movimiento por unidades y Mechanic gradual](../docs/movimiento-lego.md).
 
 ## Índice
 
 | Proyecto / pareja | Contenido | Radio |
 |---|---|---|
+| `motion-calibration` | A/B: recorrido por 2 segundos para medir adelante/atr?s | ? |
+| `motion-centimeters` | Cm estimados con calibraci?n medida; ceros inv?lidos hasta completarla | ? |
+| `motion-compass-square` | Cuatro lados por tiempo y giros de 90? con br?jula | ? |
+| `motion-heading` | Correcci?n opcional de rumbo adelante/atr?s | ? |
+| `mechanic-gradual` | Apertura/elevaci?n intermedias y rapidez por eje; calibrar antes | ? |
 | `native-v2` | Referencia solo nativa micro:bit, sin Copilli | — |
 | `copilli-native-v2` | Copilli robot + A/B/logo/sonido/pantalla/temperatura/luz/gestos nativos | — |
 | `gamepad-only` | Mando escolar V2, cuatro direcciones y X/Y | — |

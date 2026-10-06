@@ -3,7 +3,7 @@
     "private": true,
     "scripts": {
         "setup:pxt": "node scripts/setup-pxt.cjs",
-        "test": "node --test tests/*.test.cjs",
+        "test": "node --test --test-concurrency=1 tests/*.test.cjs",
         "test:pxt": "node scripts/test-pxt-v2.cjs",
         "build": "pxt build",
         "validate:pxt": "node scripts/validate-pxt.cjs",

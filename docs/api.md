@@ -49,3 +49,25 @@ Nombre visible y paquete: **Robotics** (`robotics`/`pxt-robotics`). El namespace
 Selecciona **iniciar GamePad de botones (V2)**: arriba=P8, abajo=P13, izquierda=P14, derecha=P15; X=P1/Y=P2. Todo digital activo bajo con pull-up, sin lecturas analógicas ni tocar P16 (LED independiente). `mandoHacia`, `mandoX`, `mandoY` funcionan con ambos perfiles. V2 produce ejes -100/0/100; los opuestos simultáneos se cancelan, diagonales favorecen X. Lecturas de dirección inmediatas; `botonPresionado`/eventos aplican tres muestras estables también a direcciones y X/Y. V2 no ofrece proporcionalidad analógica.
 
 **iniciar GamePad con joystick (V4)** conserva API/ID antiguos y admite joystick calibrable. `joystickX/Y/Hacia` y calibración requieren V4 y rechazan uso en V2. Un cambio V2↔V4 en ejecución se rechaza antes de hardware; reinicia y elige explícitamente. Botones de otro perfil se rechazan/ignoran con aviso; no se remapean silenciosamente. Los seis controllers por Radio usan ahora V2 escolar: X/Y accesorios; en pinza elevadora A/B nativos suben/bajan. `gamepad-joystick` conserva ejemplo V4.
+
+## Movimiento por unidades y Mechanic gradual
+
+Ver [gu?a completa](movimiento-lego.md) para contratos, calibraci?n y l?mites. Se conservan todas las firmas e IDs anteriores.
+
+| API nueva | Contrato |
+|---|---|
+| `fijarPotenciaMovimiento`, `fijarPotenciaGiro` | 0?100%; iniciales 40/30. Sin movimiento; afecta ?rdenes futuras. |
+| `ajustarBalanceRuedas`, `configurarMinimosRuedas` | Balance ?30?30; m?nimos 0?60% por rueda. Cero siempre detenido. Se aplican tambi?n a ?rdenes antiguas. |
+| `moverContinuamente(DireccionMovimiento)` | Adelante/Atras, con potencia global. Rumbo opcional en fibra cooperativa. |
+| `moverPor(direcci?n, cantidad, UnidadMovimiento)` | Segundos o Centimetros estimados; espera y detiene. M?ximo 120 s. |
+| `calibrarRecorrido`, `recorridoCalibrado` | Cm/s independiente por direcci?n y revisi?n de ajustes. Configurar no mueve. |
+| `prepararBrujula`, `brujulaPreparada` | Detiene antes de calibraci?n nativa; espera 500 ms. |
+| `girarPor(direcci?n, cantidad, UnidadGiro)` | Grados relativos por br?jula (0?360) o segundos (0?120). Espera y detiene. |
+| `mantenerRumboConBrujula`, `configurarCorreccionRumbo` | Opcional, desactivado inicialmente; ganancia 0?5, l?mite 0?50%; inicial 0,5/15. |
+| `configurarToleranciaGiro` | 2?15?, inicial 5?. Fallos de lectura/progreso dejan diagn?stico y detienen. |
+| `ponerEjeMechanic(EjeMechanic, porcentaje)` | Los cinco ejes. 0?100%; Push pasa por el frente calibrado en 50%. |
+| `establecerPosicionInicialMechanic` | Env?a directamente una posici?n calibrada, requerida para gradual si no hay orden conocida. |
+| `fijarRapidezMechanic`, `configurarRapidezEjeMechanic` | Global 1?100% (1,8?180?/s ordenados); por eje ?1 global, 0 inmediato, 1?100 gradual. |
+| `detenerMovimientoMechanic` | Cancela pasos del eje conservando ?ltimo ?ngulo; no corta energ?a. |
+
+`objetivoMechanic` es el ?ltimo ?ngulo enviado, incluido cada paso de trayectoria gradual. `detener` sigue afectando solo ruedas. `posicionMechanic(Mecanismo, porcentaje)` conserva su firma hist?rica; la nueva API por `EjeMechanic` cubre tambi?n elevaci?n y Push. Los enums nuevos usan Adelante/Segundos/Grados=0 y Atras/Centimetros/Segundos de giro=1.

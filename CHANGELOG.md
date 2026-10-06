@@ -1,3 +1,11 @@
+## Sin publicar ? movimientos por unidades y Mechanic gradual
+
+- Potencias globales, balance y m?nimos de ruedas; recorridos por tiempo y cm estimados calibrables.
+- Giros relativos por br?jula y correcci?n opcional de rumbo; cancelaci?n cooperativa de ?rdenes.
+- Posiciones de cinco ejes Mechanic, rapidez global/por eje y cancelaci?n de trayectorias.
+- Controles t?cnicos en M?s?, cinco ejemplos nuevos, pruebas de fibras PXT y protocolo f?sico.
+- La suite nativa completa se compila para V2 por tama?o; APIs e IDs hist?ricos conservados.
+
 # Cambios
 
 ## 0.1.0

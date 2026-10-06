@@ -16,7 +16,7 @@ La [comparación V4/V5](https://wiki.dfrobot.com/mbt0046/docs/21333) describe WS
 
 Local comprobado: Node 24.16.0/npm 11.13.0, `pxt` 0.5.1, `pxt-microbit` 8.0.22, `pxt-core` 12.0.19 y TypeScript auxiliar 5.9.3. Lockfile fija target/transitivas. `setup:pxt` selecciona y verifica target; `targetVersions` no fija compilador.
 
-Editor web consultado el 5 de octubre de 2026: microbit 9.0.12/PXT 13.0.9; validación separada, sin aprobación general de target 9 ni otras revisiones físicas. `.mkcd` incorpora fuentes locales, no URL publicada. Futura importación por enlace requiere autorización y nueva prueba de revisión remota.
+Editor web consultado el 5 de octubre de 2026: microbit 9.0.12/PXT 13.0.9; validación separada, sin aprobación general de target 9 ni otras revisiones físicas. `.mkcd` incorpora una instant?nea local de fuentes. Futura importación por enlace requiere autorización y nueva prueba de revisión remota.
 
 Informes locales en `built/validation/` y `output/playwright/`; [alcance H01–H12](revision-h01-h12.md). Workflow creado, sin ejecución remota. `.hex` locales generados durante compilación; ninguno probado en hardware.
 
@@ -25,3 +25,5 @@ Informes locales en `built/validation/` y `output/playwright/`; [alcance H01–H
 Instalación reportó 71 avisos: 5 bajos/35 moderados/28 altos/3 críticos; auditoría actual en `built/validation/npm-audit.json`. Son herramientas de desarrollo, no prueba de vulnerabilidad del firmware. No se ejecutó `npm audit fix --force`, que podría cambiar versiones verificadas. Revisar avisos y seleccionar/validar un entorno adecuado sigue pendiente antes de presentar la extensión como lista para publicación.
 
 No se conectó hardware. I²C correcto no confirma dispositivo ni posición. Sin sensores de fuerza/atasco/posición. Timeout Radio cooperativo de ejemplo, no garantía industrial. `detener()` no libera cargas ni desconecta servos. Identificar y [probar físicamente](pruebas-fisicas.md) cada montaje antes de usar con alumnos.
+
+La suite nativa completa de esta mejora requiere V2/CODAL por tama?o de flash. Los ejemplos se compilan por separado. Giros usan magnet?metro, sin giroscopio; cm usan tiempo calibrado, sin encoders. La respuesta de br?jula en el montaje Lite y la precisi?n f?sica permanecen pendientes.

@@ -22,7 +22,7 @@ Consulta [API](docs/api.md), [compatibilidad](docs/compatibilidad.md), [fuentes]
 
 ## Ejemplos e importación web
 
-Hay 24 proyectos independientes; [índice e importación](examples/README.md). Las parejas `controller`/`robot` son dos programas. Cada ejemplo con Radio nativa declara su dependencia.
+Hay 29 proyectos independientes; [índice e importación](examples/README.md). Las parejas `controller`/`robot` son dos programas. Cada ejemplo con Radio nativa declara su dependencia.
 
 Todavía no hay URL pública autorizada que pegar en Extensiones. Se conserva una sola extensión raíz; los `.mkcd` exportados incluyen una copia de sus fuentes para permitir importación sin dependencia `file:` ni publicación previa. Tras ejecutar `npm run export:web`, en [MakeCode micro:bit](https://makecode.microbit.org) selecciona **Importar → Abrir archivos desde tu equipo**, carga el archivo de `output/makecode/` y confirma. Calibra Mechanic antes de descargar a una placa. Las carpetas CLI con dependencias `file:` no se importan directamente en el editor web.
 
@@ -42,7 +42,7 @@ npm run export:web
 
 En PowerShell usa `npm.cmd`/`npx.cmd` si se bloquean `.ps1`. Este equipo necesitó `NODE_OPTIONS=--use-system-ca` para usar certificados del sistema sin desactivar TLS. No sustituyas el target fijado con `pxt target microbit`.
 
-`npm test` prueba las fuentes reales con dobles auxiliares y una prueba con compilador, simulador y fibras PXT reales. `validate:pxt` instala y compila raíz/pruebas y cada ejemplo, decompila los 24 ejemplos y rechaza bloques grises. Informes: `built/validation/`. `pxt test` solo compila; `pxt run` ejecuta `test.ts` en simulador.
+`npm test` prueba las fuentes reales con dobles auxiliares y una prueba con compilador, simulador y fibras PXT reales. `validate:pxt` instala y compila raíz/pruebas y cada ejemplo, decompila los 24 ejemplos y rechaza bloques grises. Informes: `built/validation/`. `npm run test:pxt` compila la suite completa para micro:bit V2/CODAL (supera la flash de V1); `pxt run` ejecuta `test.ts` en simulador.
 
 El editor web usa microbit 9.0.12/PXT 13.0.9 y se valida por separado. Compilar, convertir bloques o simular no demuestra funcionamiento físico. CI está creado, sin ejecución remota. Los avisos de herramientas de `npm audit` siguen pendientes de evaluación antes de publicación.
 
