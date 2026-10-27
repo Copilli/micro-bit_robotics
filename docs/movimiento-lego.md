@@ -2,11 +2,14 @@
 
 Los nuevos bloques están en Robotics. Los controles con `advanced=true` aparecen en **Más…**. La potencia es una orden al controlador, no velocidad física medida.
 
+Para Mechanic, la interfaz actual usa un único selector de modelo y controles comunes; las APIs específicas de los ejemplos históricos de esta guía siguen disponibles pero ocultas. Consulta [modelos, valores iniciales y límites](mechanic-calibracion.md). Maqueen usa un único bloque iniciar sin selector de versión.
+
 ## Preparar y mover
 
-1. Usa `iniciar Maqueen` y fija potencia de movimiento (inicial 40%) y de giro (inicial 30%).
+1. Usa `iniciar Maqueen` y `fijar velocidad de movimiento a 40 %` (inicial 40%). Este porcentaje ordena potencia al motor; no mide velocidad física. La API conserva el nombre `fijarPotenciaMovimiento`. La potencia de giro es independiente (inicial 30%).
 2. Ajusta balance: negativo reduce izquierda; positivo reduce derecha; cero no compensa.
-3. Usa `mover adelante/atrás continuamente`, `mover adelante/atrás por cantidad segundos/cm estimados`, `girar izquierda/derecha por cantidad grados/segundos` y `detener robot`.
+3. En los bloques básicos de Robot tienes `mover adelante/atrás durante N segundos` y `mover adelante/atrás por N cm estimados`, separados del ajuste de velocidad. Usa `moverPorSegundos(dirección, segundos)` o `moverPorCentimetros(dirección, cm)` en TypeScript. Los centímetros requieren la calibración descrita abajo.
+4. También siguen disponibles `mover adelante/atrás continuamente`, el bloque anterior con selector de unidades, `girar izquierda/derecha por cantidad grados/segundos` y `detener robot`.
 
 Las órdenes por cantidad esperan con pausas cooperativas y detienen al terminar. Cada orden sustituye la anterior; una fibra antigua no puede reactivar ni detener la nueva. `detener` cancela la maniobra actual, no una secuencia de bloques que el usuario programe después de ella. Los ajustes se capturan al empezar cada maniobra; los setters solo afectan órdenes futuras.
 
@@ -66,6 +69,6 @@ En Más…, `configurarRapidezEjeMechanic` tiene prioridad sobre global: −1 he
 
 Los cambios son locales hasta recibir una instrucción de publicación. La URL pública importa la versión publicada. Para probar esta revisión, ejecuta `npm run export:web` e importa los `.mkcd` de `output/makecode` mediante **Importar → Abrir archivos desde tu equipo** en MakeCode.
 
-Ejemplos nuevos: `motion-calibration`, `motion-centimeters`, `motion-compass-square`, `motion-heading`, `mechanic-gradual`. Los ceros de cm y Mechanic permanecen inválidos hasta introducir medidas propias. El cuadrado usa lados por tiempo y giros por brújula; interrumpe su secuencia ante diagnóstico de fallo.
+Ejemplos: `motion-calibration`, `motion-centimeters`, `motion-compass-square`, `motion-heading`, `mechanic-gradual`. Los ceros de cm permanecen inválidos hasta introducir medidas propias; Mechanic ahora usa perfiles iniciales ajustables por modelo. El cuadrado usa lados por tiempo y giros por brújula; interrumpe su secuencia ante diagnóstico de fallo.
 
 La suite completa `npm run test:pxt` selecciona micro:bit V2 (CODAL) con límites reales de flash; no cabe en V1. `validate:pxt` conserva la compilación normal de raíz/ejemplos y ejecuta la suite completa para V2. Ver [protocolo físico](pruebas-fisicas.md) antes de atribuir precisión.

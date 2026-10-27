@@ -6,6 +6,7 @@ namespace copilli {
         highAngle: number
         frontAngle: number
         targetAngle: number
+        zeroAngle: number
         operation: number
     }
 
@@ -13,6 +14,96 @@ namespace copilli {
     let globalSpeed = 0
     let axisSpeeds: number[] = [-1, -1, -1, -1, -1]
     let configurationResults: string[] = ["No solicitada", "No solicitada", "No solicitada", "No solicitada", "No solicitada"]
+
+    /** Elige el accesorio y aplica su perfil inicial, sin mover. Ajustable con límites Mechanic. */
+    //% blockId=copilli_configurar_mechanic_modelo block="configurar Mechanic %modelo en %puerto"
+    //% group="Preparación" weight=94
+    export function configurarMechanic(modelo: ModeloMechanic, puerto: PuertoServo): void {
+        if (!validAxis(modelo)) { copilliDiagnostics.set("Modelo Mechanic no válido."); return }
+        if (puerto != PuertoServo.S1 && puerto != PuertoServo.S2) {
+            rejectConfiguration(modelo, "puerto Mechanic no válido"); return
+        }
+        // Selecting a model explicitly replaces the model assigned to this port.
+        quitarConfiguracionMechanic(puerto)
+        if (modelo == ModeloMechanic.Push) configurarSensorGiratorio(puerto, 40, 90, 140)
+        else if (modelo == ModeloMechanic.Beetle) configureMechanic(modelo, puerto, 100, 30)
+        else configureMechanic(modelo, puerto, 120, 60)
+    }
+
+    /** Ajusta el perfil ya configurado. Inicio: cerrado/bajo/izquierda; fin: abierto/alto/derecha.
+     * Para Push, centro es frente; 0 usa el punto medio. Configurar no mueve.
+     */
+    //% blockId=copilli_limites_mechanic block="ajustar límites de %modelo inicio %inicio fin %fin || centro %centro"
+    //% inicio.min=10 inicio.max=170 inicio.defl=100 fin.min=10 fin.max=170 fin.defl=30 centro.defl=0
+    //% group="Avanzado" advanced=true
+    export function ajustarLimitesMechanic(modelo: ModeloMechanic, inicio: number, fin: number, centro: number = 0): void {
+        if (!validAxis(modelo)) { copilliDiagnostics.set("Modelo Mechanic no válido."); return }
+        let profile = findProfile(modelo)
+        if (profile == null) { copilliDiagnostics.setMechanic(modelo, "Primero usa configurar Mechanic con el modelo y puerto."); return }
+        if (modelo == ModeloMechanic.Push) {
+            configurarSensorGiratorio(profile.port, inicio, centro == 0 ? Math.round((inicio + fin) / 2) : centro, fin)
+        } else configureMechanic(modelo, profile.port, inicio, fin)
+    }
+
+    /** Posición del modelo: 0 cerrado/bajo/izquierda; 100 abierto/alto/derecha; Push 50 frente. */
+    //% blockId=copilli_posicion_modelo_mechanic block="poner Mechanic %modelo en %porcentaje \\%"
+    //% porcentaje.min=0 porcentaje.max=100 porcentaje.defl=50
+    //% group="Mechanic" weight=110
+    export function ponerMechanic(modelo: ModeloMechanic, porcentaje: number): void {
+        ponerEjeMechanic(<EjeMechanic><number>modelo, porcentaje)
+    }
+
+    /** Ángulo absoluto del servo del modelo, dentro de su perfil. Usa rapidez y cancelación comunes. */
+    //% blockId=copilli_angulo_modelo_mechanic block="poner Mechanic %modelo a %angulo grados de servo"
+    //% angulo.min=10 angulo.max=170 angulo.defl=90
+    //% group="Mechanic" weight=109
+    export function ponerAnguloMechanic(modelo: ModeloMechanic, angulo: number): void {
+        if (!validAxis(modelo)) { copilliDiagnostics.set("Modelo Mechanic no válido."); return }
+        let profile = findProfile(modelo)
+        if (profile == null || !copilliRobotIsReady()) {
+            copilliDiagnostics.setMechanic(modelo, "Inicia Maqueen y configura el modelo Mechanic antes de mover."); return
+        }
+        if (!validAngle(angulo) || angulo < Math.min(profile.lowAngle, profile.highAngle) || angulo > Math.max(profile.lowAngle, profile.highAngle)) {
+            copilliDiagnostics.setMechanic(modelo, "Ángulo rechazado: usa grados enteros dentro de los límites del modelo."); return
+        }
+        moveAngle(profile, angulo, false)
+    }
+
+    //% blockId=copilli_cero_modelo_mechanic block="establecer posición ordenada de %modelo como cero"
+    //% group="Avanzado" advanced=true
+    export function establecerCeroMechanic(modelo: ModeloMechanic): void {
+        if (!validAxis(modelo)) { copilliDiagnostics.set("Modelo Mechanic no válido."); return }
+        let profile = findProfile(modelo)
+        if (profile == null || !copilliRobotIsReady() || profile.targetAngle < 0) {
+            copilliDiagnostics.setMechanic(modelo, "Primero inicia Maqueen, configura Mechanic y ordena una posición."); return
+        }
+        profile.operation++
+        profile.zeroAngle = profile.targetAngle
+        copilliDiagnostics.setMechanic(modelo, "")
+    }
+    /** Ángulo desde el cero ordenado; signo positivo hacia fin y negativo hacia inicio. */
+    //% blockId=copilli_desde_cero_modelo_mechanic block="orientar %modelo a %grados grados desde cero"
+    //% grados.min=-160 grados.max=160 grados.defl=0
+    //% group="Avanzado" advanced=true
+    export function orientarMechanicGrados(modelo: ModeloMechanic, grados: number): void {
+        if (!validAxis(modelo)) { copilliDiagnostics.set("Modelo Mechanic no válido."); return }
+        let profile = findProfile(modelo)
+        if (profile == null || !copilliRobotIsReady()) {
+            copilliDiagnostics.setMechanic(modelo, "Primero inicia Maqueen y configura Mechanic."); return
+        }
+        moveSensorDegrees(profile, grados, false)
+    }
+    //% blockId=copilli_girar_modelo_mechanic block="mover %modelo %grados grados desde su posición ordenada"
+    //% grados.min=-160 grados.max=160 grados.defl=10
+    //% group="Avanzado" advanced=true
+    export function girarMechanicGrados(modelo: ModeloMechanic, grados: number): void {
+        if (!validAxis(modelo)) { copilliDiagnostics.set("Modelo Mechanic no válido."); return }
+        let profile = findProfile(modelo)
+        if (profile == null || !copilliRobotIsReady()) {
+            copilliDiagnostics.setMechanic(modelo, "Primero inicia Maqueen y configura Mechanic."); return
+        }
+        moveSensorDegrees(profile, grados, true)
+    }
 
     function validAngle(angle: number): boolean {
         return angle == Math.round(angle) && angle >= 10 && angle <= 170
@@ -56,6 +147,7 @@ namespace copilli {
             highAngle: highAngle,
             frontAngle: frontAngle,
             targetAngle: -1,
+            zeroAngle: frontAngle,
             operation: 0
         })
         configurationResults[mechanism] = "Configuración aceptada; perfil vigente actualizado sin movimiento"
@@ -65,7 +157,10 @@ namespace copilli {
     function moveMechanism(mechanism: number, percentage: number): void {
         let profile = findProfile(mechanism)
         if (profile == null) {
-            copilliDiagnostics.setMechanic(mechanism, "Acción segura: falta configurar y calibrar este accesorio.")
+            let block = mechanism == 0 ? "configurar pinza" : mechanism == 4 ? "configurar elevación de pinza" :
+                mechanism == 1 ? "configurar pala" : mechanism == 2 ? "configurar horquillas" : "configurar sensor giratorio"
+            let reason = configurationResults[mechanism]
+            copilliDiagnostics.setMechanic(mechanism, "Falta el bloque " + block + " con puerto S1/S2 y ángulos válidos distintos entre 10 y 170. Resultado previo: " + reason)
             return
         }
         if (!copilliRobotIsReady()) {
@@ -127,7 +222,9 @@ namespace copilli {
      */
     //% blockId=copilli_configurar_pinza block="configurar pinza en %puerto abierta %anguloAbierta cerrada %anguloCerrada"
     //% anguloAbierta.min=10 anguloAbierta.max=170 anguloCerrada.min=10 anguloCerrada.max=170
-    //% group="Avanzado" weight=100 advanced=true
+    //% anguloAbierta.defl=80 anguloCerrada.defl=100
+    //% group="Preparación" weight=94
+    //% blockHidden=true
     export function configurarPinza(puerto: PuertoServo, anguloAbierta: number, anguloCerrada: number): void {
         configureMechanic(Mecanismo.Pinza, puerto, anguloCerrada, anguloAbierta)
     }
@@ -135,16 +232,47 @@ namespace copilli {
     /** Elevación opcional, independiente de apertura. Configurar no mueve. */
     //% blockId=copilli_configurar_elevacion_pinza block="configurar elevación de pinza en %puerto baja %anguloBaja alta %anguloAlta"
     //% anguloBaja.min=10 anguloBaja.max=170 anguloAlta.min=10 anguloAlta.max=170
-    //% group="Avanzado" advanced=true
+    //% anguloBaja.defl=80 anguloAlta.defl=100
+    //% group="Preparación" weight=93
+    //% blockHidden=true
     export function configurarElevacionPinza(puerto: PuertoServo, anguloBaja: number, anguloAlta: number): void {
         configureMechanic(4, puerto, anguloBaja, anguloAlta)
     }
     //% blockId=copilli_subir_pinza block="subir pinza"
     //% group="Mechanic" weight=94
+    //% blockHidden=true
     export function subirPinza(): void { moveMechanism(4, 100) }
     //% blockId=copilli_bajar_pinza block="bajar pinza"
     //% group="Mechanic" weight=93
+    //% blockHidden=true
     export function bajarPinza(): void { moveMechanism(4, 0) }
+
+    /** Orden directa para probar/calibrar S1/S2 sin perfil. No confirma respuesta física.
+     * Si el puerto tiene un perfil, respeta sus extremos, cancela su trayectoria y actualiza su objetivo.
+     */
+    //% blockId=copilli_servo_grados block="poner servo %puerto a %angulo grados directamente"
+    //% angulo.min=10 angulo.max=170 angulo.defl=90
+    //% group="Avanzado" weight=79 advanced=true
+    export function ponerServoGrados(puerto: PuertoServo, angulo: number): void {
+        if ((puerto != PuertoServo.S1 && puerto != PuertoServo.S2) || !validAngle(angulo)) {
+            copilliDiagnostics.set("Orden de servo rechazada: usa S1/S2 y un ángulo entero entre 10 y 170."); return
+        }
+        if (!copilliRobotIsReady()) {
+            copilliDiagnostics.setRobot("Prepara Maqueen antes de probar un servo."); return
+        }
+        for (let i = 0; i < servoProfiles.length; i++) {
+            let profile = servoProfiles[i]
+            if (profile.port == puerto) {
+                if (angulo < Math.min(profile.lowAngle, profile.highAngle) || angulo > Math.max(profile.lowAngle, profile.highAngle)) {
+                    copilliDiagnostics.setMechanic(profile.mechanism, "Ángulo fuera de los límites configurados del accesorio; no se envió movimiento."); return
+                }
+                moveAngle(profile, angulo, true)
+                return
+            }
+        }
+        copilliHardware.setServo(puerto, angulo)
+        copilliDiagnostics.set("")
+    }
 
     /**
      * Configura pala Loader: ángulo baja y ángulo alta, sin mover el servo.
@@ -152,6 +280,7 @@ namespace copilli {
     //% blockId=copilli_configurar_pala block="configurar pala en %puerto baja %anguloBaja alta %anguloAlta"
     //% anguloBaja.min=10 anguloBaja.max=170 anguloAlta.min=10 anguloAlta.max=170
     //% group="Avanzado" weight=95 advanced=true
+    //% blockHidden=true
     export function configurarPala(puerto: PuertoServo, anguloBaja: number, anguloAlta: number): void {
         configureMechanic(Mecanismo.Pala, puerto, anguloBaja, anguloAlta)
     }
@@ -162,6 +291,7 @@ namespace copilli {
     //% blockId=copilli_configurar_horquillas block="configurar horquillas en %puerto bajas %anguloBajas altas %anguloAltas"
     //% anguloBajas.min=10 anguloBajas.max=170 anguloAltas.min=10 anguloAltas.max=170
     //% group="Avanzado" weight=90 advanced=true
+    //% blockHidden=true
     export function configurarHorquillas(puerto: PuertoServo, anguloBajas: number, anguloAltas: number): void {
         configureMechanic(Mecanismo.Horquillas, puerto, anguloBajas, anguloAltas)
     }
@@ -171,11 +301,14 @@ namespace copilli {
      */
     //% blockId=copilli_configurar_sensor_giratorio block="configurar sensor giratorio en %puerto izquierda %izquierda frente %frente derecha %derecha"
     //% izquierda.min=10 izquierda.max=170 frente.min=10 frente.max=170 derecha.min=10 derecha.max=170
-    //% group="Avanzado" weight=85 advanced=true
+    //% izquierda.defl=60 frente.defl=90 derecha.defl=120
+    //% group="Preparación" weight=89
+    //% blockHidden=true
     export function configurarSensorGiratorio(puerto: PuertoServo, izquierda: number, frente: number, derecha: number): void {
         if (!validAngle(izquierda) || !validAngle(frente) || !validAngle(derecha) ||
-            izquierda == frente || izquierda == derecha || frente == derecha) {
-            rejectConfiguration(3, "usa tres ángulos distintos entre 10 y 170")
+            izquierda == frente || izquierda == derecha || frente == derecha ||
+            frente < Math.min(izquierda, derecha) || frente > Math.max(izquierda, derecha)) {
+            rejectConfiguration(3, "usa tres ángulos distintos entre 10 y 170, con frente entre izquierda y derecha")
             return
         }
         if (puerto != PuertoServo.S1 && puerto != PuertoServo.S2) {
@@ -206,6 +339,7 @@ namespace copilli {
      */
     //% blockId=copilli_abrir_pinza block="abrir pinza"
     //% group="Mechanic" weight=100
+    //% blockHidden=true
     export function abrirPinza(): void {
         moveMechanism(Mecanismo.Pinza, 100)
     }
@@ -215,6 +349,7 @@ namespace copilli {
      */
     //% blockId=copilli_cerrar_pinza block="cerrar pinza"
     //% group="Mechanic" weight=95
+    //% blockHidden=true
     export function cerrarPinza(): void {
         moveMechanism(Mecanismo.Pinza, 0)
     }
@@ -224,6 +359,7 @@ namespace copilli {
      */
     //% blockId=copilli_subir_pala block="subir pala"
     //% group="Mechanic" weight=90
+    //% blockHidden=true
     export function subirPala(): void {
         moveMechanism(Mecanismo.Pala, 100)
     }
@@ -233,6 +369,7 @@ namespace copilli {
      */
     //% blockId=copilli_bajar_pala block="bajar pala"
     //% group="Mechanic" weight=85
+    //% blockHidden=true
     export function bajarPala(): void {
         moveMechanism(Mecanismo.Pala, 0)
     }
@@ -242,6 +379,7 @@ namespace copilli {
      */
     //% blockId=copilli_subir_horquillas block="subir horquillas"
     //% group="Mechanic" weight=80
+    //% blockHidden=true
     export function subirHorquillas(): void {
         moveMechanism(Mecanismo.Horquillas, 100)
     }
@@ -251,6 +389,7 @@ namespace copilli {
      */
     //% blockId=copilli_bajar_horquillas block="bajar horquillas"
     //% group="Mechanic" weight=75
+    //% blockHidden=true
     export function bajarHorquillas(): void {
         moveMechanism(Mecanismo.Horquillas, 0)
     }
@@ -260,10 +399,11 @@ namespace copilli {
      */
     //% blockId=copilli_orientar_sensor block="orientar sensor %direccion"
     //% group="Mechanic" weight=70
+    //% blockHidden=true
     export function orientarSensor(direccion: DireccionSensor): void {
         let profile = findProfile(3)
         if (profile == null) {
-            copilliDiagnostics.setMechanic(3, "Accion segura: falta configurar y calibrar el sensor giratorio Push.")
+            copilliDiagnostics.setMechanic(3, "Falta el bloque configurar sensor giratorio: elige S1/S2 y ángulos válidos distintos entre 10 y 170; 0 no es válido.")
             return
         }
         if (!copilliRobotIsReady()) {
@@ -279,6 +419,71 @@ namespace copilli {
         if (direccion == DireccionSensor.Frente) angle = profile.frontAngle
         else if (direccion == DireccionSensor.Derecha) angle = profile.highAngle
         moveAngle(profile, angle, false)
+    }
+
+    function sensorForDegrees(): ServoProfile {
+        let profile = findProfile(3)
+        if (profile == null) {
+            copilliDiagnostics.setMechanic(3, "Falta configurar sensor giratorio en S1/S2 con sus ángulos medidos.")
+            return null
+        }
+        if (!copilliRobotIsReady()) {
+            copilliDiagnostics.setMechanic(3, "Prepara Maqueen antes de orientar el sensor.")
+            return null
+        }
+        return profile
+    }
+
+    function moveSensorDegrees(profile: ServoProfile, degrees: number, relative: boolean): void {
+        let axis = profile.mechanism
+        if (!copilliMotion.finite(degrees) || degrees != Math.round(degrees)) {
+            copilliDiagnostics.setMechanic(axis, "Ángulo rechazado: usa grados enteros."); return
+        }
+        if (relative && profile.targetAngle < 0) {
+            copilliDiagnostics.setMechanic(axis, "Ordena una posición inicial antes de un giro relativo."); return
+        }
+        let origin = relative ? profile.targetAngle : profile.zeroAngle
+        let angle = origin + degrees * (profile.highAngle > profile.lowAngle ? 1 : -1)
+        if (angle < Math.min(profile.lowAngle, profile.highAngle) ||
+            angle > Math.max(profile.lowAngle, profile.highAngle)) {
+            copilliDiagnostics.setMechanic(axis, "Ángulo fuera de los límites configurados del accesorio; no se envió movimiento."); return
+        }
+        moveAngle(profile, angle, false)
+    }
+
+    /** Ángulo respecto al cero (inicialmente frente). Positivo hacia derecha; negativo hacia izquierda. */
+    //% blockId=copilli_orientar_sensor_grados block="orientar sensor a %grados grados desde cero"
+    //% grados.min=-160 grados.max=160 grados.defl=0
+    //% group="Mechanic" weight=69
+    //% blockHidden=true
+    export function orientarSensorGrados(grados: number): void {
+        let profile = sensorForDegrees()
+        if (profile != null) moveSensorDegrees(profile, grados, false)
+    }
+
+    /** Define cero en el último ángulo enviado y cancela pasos pendientes. No mueve ni mide el servo. */
+    //% blockId=copilli_cero_sensor block="establecer posición actual ordenada del sensor como cero"
+    //% group="Mechanic" weight=68
+    //% blockHidden=true
+    export function establecerCeroSensor(): void {
+        let profile = sensorForDegrees()
+        if (profile == null) return
+        if (profile.targetAngle < 0) {
+            copilliDiagnostics.setMechanic(3, "Primero orienta el sensor o establece su posición inicial; no hay ángulo enviado para definir cero."); return
+        }
+        profile.operation++
+        profile.zeroAngle = profile.targetAngle
+        copilliDiagnostics.setMechanic(3, "")
+    }
+
+    /** Suma grados al último ángulo enviado, dentro de los límites. Positivo hacia derecha. */
+    //% blockId=copilli_girar_sensor_grados block="girar sensor %grados grados desde su posición ordenada"
+    //% grados.min=-160 grados.max=160 grados.defl=10
+    //% group="Mechanic" weight=67
+    //% blockHidden=true
+    export function girarSensorGrados(grados: number): void {
+        let profile = sensorForDegrees()
+        if (profile != null) moveSensorDegrees(profile, grados, true)
     }
 
     /**
@@ -299,6 +504,7 @@ namespace copilli {
     //% blockId=copilli_poner_eje_mechanic block="poner %eje en %porcentaje \\%"
     //% porcentaje.min=0 porcentaje.max=100 porcentaje.defl=50
     //% group="Mechanic" weight=110
+    //% blockHidden=true
     export function ponerEjeMechanic(eje: EjeMechanic, porcentaje: number): void {
         if (!validAxis(eje) || !copilliMotion.finite(porcentaje) || porcentaje < 0 || porcentaje > 100) {
             copilliDiagnostics.setMechanic(eje, "Posición rechazada: eje válido y porcentaje entre 0 y 100."); return

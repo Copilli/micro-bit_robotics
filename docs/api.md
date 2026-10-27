@@ -2,14 +2,18 @@
 
 Los textos y API son diseño de Copilli. Control Maqueen contrastado con [DFRobot, commit fijo](https://github.com/DFRobot/pxt-maqueen/tree/a1fbb5e88ef4d53b814138d5a5ed73ab08465deb), sin importar sus tareas globales ni paquete. Radio permanece nativa, solo en ejemplos.
 
+La interfaz actual usa solo `iniciarMaqueen()` y el selector de accesorio `configurarMechanic(ModeloMechanic, PuertoServo)`. No hay elección ni rutas de versiones de Maqueen. El usuario confirmó dos sensores de línea y se conserva su controlador. Posición común: `ponerMechanic(modelo, porcentaje)` o `ponerAnguloMechanic(modelo, ángulo)`. Límites opcionales: `ajustarLimitesMechanic(modelo, inicio, fin, centro=0)`; centro 0 calcula el punto medio de Push. Las APIs específicas de accesorios de la tabla histórica se conservan ocultas para compatibilidad. Ver [perfiles y valores iniciales](mechanic-calibracion.md).
+
+Los sensores del robot se consultan con `distanciaCm()` y `sobreLinea(Izquierdo/Derecho)`. La placa de dos sensores usa P13/P14 para línea. No se ofrecen opciones del sensor central, ADC, luz de la placa ni batería de otro controlador.
+
 | API | Contrato |
 |---|---|
-| `iniciarMaqueen`, `iniciarGamepad` | Preparación visible, explícita, roles exclusivos. Segundo rol rechazado antes de hardware. Repetición idempotente; solo el primer inicio Maqueen detiene ruedas. |
+| `iniciarMaqueen`, `iniciarGamepad` | Inicio explícito, roles exclusivos y repetición idempotente. Maqueen tiene un único bloque de inicio sin parámetros. |
 | `avanzar`, `retroceder`, `girarHacia`, `detener` | Potencia 0–100 a 0–255; giro solo izquierda/derecha. Detener afecta ruedas, no energía del servo. |
 | `moverRuedas` | -100–100 por rueda; I²C 0x10, registros 0x00/0x02, dirección 0 adelante/1 atrás. Dos órdenes independientes, sin atomicidad física garantizada. |
-| `distanciaCm` | P1 disparo/P2 eco, secuencia `readUlt` del commit fijo: pausas **1/20 ms**, pulso alto/bajo según nivel inicial, timeout **29000 µs**, redondeo pulso/59. Pulso ≤0 o ≥timeout retorna -1. Sin reintento ni sustitución por 500. |
-| `sobreLinea` | P13/P14; nivel bajo se interpreta como negro. Polaridad escolar pendiente de prueba. |
-| `faros` | Digital P8/P12; izquierda/derecha/ambos. Dispositivo distinto de RGB ambiental. |
+| `distanciaCm` | P1 disparo/P2 eco, pausas 1/20 ms, timeout 29000 µs, pulso/59 redondeado. Hasta cinco intentos; -1 si no hay eco válido. No sustituye errores por 500. |
+| `sobreLinea` | P13/P14 activos bajos para izquierda/derecha; negro=true. |
+| `faros` | Digital P8/P12, izquierda/derecha/ambos. |
 | `joystickHacia`, `joystickX`, `joystickY` | X positivo derecha/Y positivo arriba; dirección dominante, empate favorece X. Centro inicial 512; calibración atómica acepta 100–923 en ambos ejes. |
 | `configurarZonaMuerta` | 0–30 % de cada semieje calibrado. Normaliza por longitud correspondiente, aplica umbral y reescala recorrido restante hasta ±100. Conserva extremos con centros desplazados. |
 | `botonPresionado`, eventos | C=P13/D=P14/E=P15/F=P16/Z=P8, activos bajos; tres muestras estables. Pausa 10 ms más espera de `forever`, sin garantía de 30 ms. |
@@ -18,13 +22,15 @@ Los textos y API son diseño de Copilli. Control Maqueen contrastado con [DFRobo
 | `configurarPinza`, `abrirPinza`, `cerrarPinza` | Puerto y extremos apertura/cierre, independientes de elevación. |
 | `configurarElevacionPinza`, `subirPinza`, `bajarPinza` | Eje opcional independiente, dos extremos baja/alta. Configurar no mueve. |
 | `configurarPala`, `configurarHorquillas` y subir/bajar | Dos extremos semánticos bajo/alto. |
-| `configurarSensorGiratorio`, `orientarSensor` | Push: tres ángulos distintos izquierda/frente/derecha; la placa frontal empuja al conducir. |
+| `configurarSensorGiratorio`, `orientarSensor` | API heredada oculta: Push con izquierda/frente/derecha. Nuevos proyectos seleccionan ModeloMechanic.Push. |
+| `ponerServoGrados(PuertoServo, ángulo)` | Orden directa S1/S2 de 10–170° enteros para prueba/calibración. Exige iniciar Maqueen. Con perfil respeta límites y actualiza objetivo; sin perfil no necesita configurar un accesorio. No verifica respuesta física. |
+| `orientarSensorGrados`, `establecerCeroSensor`, `girarSensorGrados` | Ángulo desde cero, cero en última posición ordenada y desplazamiento relativo. Grados enteros; positivo derecha. Respeta extremos, rapidez y cancelación. Ver [calibración](mechanic-calibracion.md#sensor-giratorio-push-por-grados). |
 | `posicionMechanic` | API existente para apertura/pala/horquillas: 0 % cerrado/bajo, 100 % abierto/alto, incluso con ángulos invertidos. Enum histórico conservado; no se añadió elevación a esa firma. |
 | `quitarConfiguracionMechanic(puerto)` | Retira perfil del puerto, sin movimiento ni corte de energía. |
 
 ## Estado y calibración
 
-`maqueenPreparado`/`gamepadPreparado` consultan estado lógico, sin detección de hardware. `diagnosticoRobot`, `diagnosticoGamepad`, `diagnosticoMechanic(eje)` separan avisos. `diagnostico()` conserva el último texto de operación; **no** es estado completo. Iniciar un subsistema no borra avisos ajenos.
+`maqueenPreparado`/`gamepadPreparado` consultan estado lógico. No verifican recepción de órdenes por el controlador, cada periférico ni posición física. `diagnosticoRobot`, `diagnosticoGamepad`, `diagnosticoMechanic(eje)` separan avisos. `diagnostico()` conserva el último texto de operación; **no** es estado completo. Iniciar un subsistema no borra avisos ajenos.
 
 `EjeMechanic`: AperturaPinza=0, Pala=1, Horquillas=2, SensorPush=3, ElevacionPinza=4. Consultas sin acceso a hardware:
 
@@ -51,6 +57,8 @@ Selecciona **iniciar GamePad de botones (V2)**: arriba=P8, abajo=P13, izquierda=
 **iniciar GamePad con joystick (V4)** conserva API/ID antiguos y admite joystick calibrable. `joystickX/Y/Hacia` y calibración requieren V4 y rechazan uso en V2. Un cambio V2↔V4 en ejecución se rechaza antes de hardware; reinicia y elige explícitamente. Botones de otro perfil se rechazan/ignoran con aviso; no se remapean silenciosamente. Los seis controllers por Radio usan ahora V2 escolar: X/Y accesorios; en pinza elevadora A/B nativos suben/bajan. `gamepad-joystick` conserva ejemplo V4.
 
 ## Movimiento por unidades y Mechanic gradual
+
+En los bloques básicos, `fijar velocidad de movimiento a N %` conserva la API `fijarPotenciaMovimiento(N)`. Los bloques separados `moverPorSegundos(DireccionMovimiento, segundos)` y `moverPorCentimetros(DireccionMovimiento, cm)` usan esa configuración, esperan y detienen al terminar. Los cm requieren calibración vigente; ambos conservan cancelación, corrección de rumbo opcional y el máximo de 120 s del motor de movimiento. `moverPor` sigue disponible con selector de unidad.
 
 Ver [gu?a completa](movimiento-lego.md) para contratos, calibraci?n y l?mites. Se conservan todas las firmas e IDs anteriores.
 

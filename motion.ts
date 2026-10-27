@@ -258,7 +258,7 @@ namespace copilliMotion {
 
 namespace copilli {
     /** Potencia ordenada, no velocidad física medida. Se aplica a las siguientes órdenes. */
-    //% blockId=copilli_potencia_movimiento block="fijar potencia de movimiento a %potencia \\%"
+    //% blockId=copilli_potencia_movimiento block="fijar velocidad de movimiento a %potencia \\%"
     //% potencia.min=0 potencia.max=100 potencia.defl=40
     //% group="Preparación" weight=99
     export function fijarPotenciaMovimiento(potencia: number): void { copilliMotion.setPower(potencia, false) }
@@ -282,6 +282,20 @@ namespace copilli {
     //% blockId=copilli_mover_continuamente block="mover %direccion continuamente"
     //% group="Robot" weight=110
     export function moverContinuamente(direccion: DireccionMovimiento): void { copilliMotion.move(direccion, 0, 0, true) }
+    /** Usa la velocidad configurada, espera los segundos indicados y detiene el robot. */
+    //% blockId=copilli_mover_segundos block="mover %direccion durante %segundos segundos"
+    //% segundos.min=0 segundos.max=120 segundos.defl=1
+    //% group="Robot" weight=113
+    export function moverPorSegundos(direccion: DireccionMovimiento, segundos: number): void {
+        copilliMotion.move(direccion, segundos, UnidadMovimiento.Segundos, false)
+    }
+    /** Usa la velocidad configurada y detiene al terminar. Requiere calibrar el recorrido; los cm son estimados. */
+    //% blockId=copilli_mover_centimetros block="mover %direccion por %cm cm estimados"
+    //% cm.min=0 cm.defl=20
+    //% group="Robot" weight=112
+    export function moverPorCentimetros(direccion: DireccionMovimiento, cm: number): void {
+        copilliMotion.move(direccion, cm, UnidadMovimiento.Centimetros, false)
+    }
     /** Espera hasta terminar y detiene. Los cm son una estimación calibrada por tiempo. */
     //% blockId=copilli_mover_por block="mover %direccion por %cantidad %unidad"
     //% cantidad.min=0 cantidad.defl=1

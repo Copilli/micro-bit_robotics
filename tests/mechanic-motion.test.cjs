@@ -3,6 +3,99 @@ const assert=require('node:assert/strict');
 const {runtime}=require('./runtime.cjs');
 const servo=r=>r.log.filter(x=>x[0]==='i2c'&&x[2].length===2).map(x=>x[2]);
 function setup(){const r=runtime({advanceTime:true});r.api.iniciarMaqueen();r.api.configurarPinza(0,150,30);r.log.length=0;return r;}
+
+test('direct servo test emits original Maqueen I2C packets without accessory configuration',()=>{
+    const r=runtime();r.api.ponerServoGrados(0,80);assert.deepEqual(servo(r),[]);
+    r.api.iniciarMaqueen();r.log.length=0;
+    r.api.ponerServoGrados(0,80);r.api.ponerServoGrados(0,100);r.api.ponerServoGrados(1,90);
+    assert.deepEqual(r.log,[['i2c',16,[20,80]],['i2c',16,[20,100]],['i2c',16,[21,90]]]);
+    for(const [port,angle] of [[2,90],[NaN,90],[0,0],[0,180],[0,80.5],[0,NaN],[0,Infinity]])r.api.ponerServoGrados(port,angle);
+    assert.equal(servo(r).length,3);
+});
+test('direct servo respects assigned limits and cancels gradual steps without losing target',()=>{
+    const r=setup();r.api.establecerPosicionInicialMechanic(0,0);r.api.fijarRapidezMechanic(50);
+    r.pauseHook=()=>{if(r.time===40)r.api.ponerServoGrados(0,90);};
+    r.api.abrirPinza();assert.equal(r.api.objetivoMechanic(0),90);assert.equal(servo(r).at(-1)[1],90);
+    const count=servo(r).length;r.api.ponerServoGrados(0,160);
+    assert.equal(servo(r).length,count);assert.equal(r.api.objetivoMechanic(0),90);
+    assert.match(r.api.diagnosticoMechanic(0),/límites/);
+});
+test('gripper missing profile retains rejected configuration reason and valid S1 sends close angle',()=>{
+    const r=runtime();r.api.iniciarMaqueen();r.api.configurarPinza(0,0,0);r.api.cerrarPinza();
+    assert.deepEqual(servo(r),[]);assert.match(r.api.diagnosticoMechanic(0),/configurar pinza.*rechazada/);
+    r.api.configurarPinza(0,80,100);r.api.cerrarPinza();r.api.abrirPinza();
+    assert.deepEqual(servo(r),[[20,100],[20,80]]);
+});
+for(const example of ['servo-s1-test','mechanic-beetle'])test(`${example}: actual A/B handlers send S1 packets`,()=>{
+    const r=runtime();const buttons={};r.ctx.Button={A:0,B:1,AB:2};
+    r.ctx.input.onButtonPressed=(button,handler)=>buttons[button]=handler;
+    r.ctx.basic.showString=()=>{};
+    r.loadExample(`examples/${example}/main.ts`);
+    assert.deepEqual(servo(r),[]);
+    buttons[0]();buttons[1]();buttons[2]();
+    assert.deepEqual(servo(r),[[20,example==='mechanic-beetle'?30:80],[20,100]]);
+});
+
+test('Push reports missing configuration and rejects the old zero template without servo writes',()=>{
+    const r=runtime();r.api.iniciarMaqueen();r.api.orientarSensor(1);
+    assert.match(r.api.diagnosticoMechanic(3),/configurar sensor giratorio/);
+    r.api.configurarSensorGiratorio(0,0,0,0);r.api.orientarSensor(0);
+    assert.deepEqual(servo(r),[]);
+    r.api.configurarSensorGiratorio(0,60,90,120);r.api.orientarSensor(1);
+    assert.deepEqual(servo(r),[[20,90]]);
+});
+test('Push degree commands preserve exact degrees, zero reference, inverted mounts and limits on either port',()=>{
+    for(const port of [0,1])for(const sign of [1,-1]) {
+        const r=runtime();r.api.iniciarMaqueen();
+        r.api.configurarSensorGiratorio(port,90-sign*40,90,90+sign*50);
+        r.api.orientarSensorGrados(17);
+        assert.deepEqual(servo(r),[[20+port,90+sign*17]]);
+        r.api.establecerCeroSensor();assert.equal(servo(r).length,1);
+        r.api.orientarSensorGrados(-7);assert.equal(servo(r).at(-1)[1],90+sign*10);
+        r.api.girarSensorGrados(3);assert.equal(servo(r).at(-1)[1],90+sign*13);
+        const count=servo(r).length;
+        for(const angle of [100,-100,NaN,Infinity,0.5]) {
+            r.api.orientarSensorGrados(angle);r.api.girarSensorGrados(angle);
+        }
+        assert.equal(servo(r).length,count);
+        r.api.orientarSensor(0);assert.equal(servo(r).at(-1)[1],90-sign*40);
+        r.api.orientarSensor(2);assert.equal(servo(r).at(-1)[1],90+sign*50);
+        r.api.configurarSensorGiratorio(port,60,90,120);
+        r.api.orientarSensorGrados(0);assert.equal(servo(r).at(-1)[1],90);
+    }
+});
+test('Push degree commands require ready robot, known relative position and initialization for gradual motion',()=>{
+    const r=runtime({advanceTime:true});
+    r.api.orientarSensorGrados(0);r.api.girarSensorGrados(1);r.api.establecerCeroSensor();
+    r.api.configurarSensorGiratorio(0,60,90,120);r.api.orientarSensorGrados(0);
+    assert.deepEqual(servo(r),[]);
+    r.api.iniciarMaqueen();r.api.girarSensorGrados(1);r.api.establecerCeroSensor();
+    assert.deepEqual(servo(r),[]);
+    r.api.fijarRapidezMechanic(50);r.api.orientarSensorGrados(10);
+    assert.deepEqual(servo(r),[]);
+    r.api.establecerPosicionInicialMechanic(3,50);
+    let zeroed=false;
+    r.pauseHook=()=>{if(!zeroed){zeroed=true;r.api.establecerCeroSensor();}};
+    r.api.orientarSensorGrados(20);
+    assert.equal(r.api.objetivoMechanic(3),90);
+    r.pauseHook=undefined;r.api.girarSensorGrados(5);
+    assert.equal(r.api.objetivoMechanic(3),95);
+    r.api.orientarSensorGrados(0);assert.equal(r.api.objetivoMechanic(3),90);
+    const profile=r.api.perfilMechanic(3);
+    r.api.configurarSensorGiratorio(0,60,140,120);
+    assert.equal(r.api.perfilMechanic(3),profile);
+});
+test('Push example initializes servo and buttons move in 10 degree increments',()=>{
+    const r=runtime();const buttons={};let logo;
+    r.ctx.Button={A:0,B:1};r.ctx.TouchButtonEvent={Pressed:0};
+    r.ctx.input.onButtonPressed=(button,handler)=>buttons[button]=handler;
+    r.ctx.input.onLogoEvent=(event,handler)=>logo=handler;
+    r.loadExample('examples/mechanic-push/main.ts');
+    assert.deepEqual(servo(r),[[20,90]]);
+    buttons[0]();assert.equal(servo(r).at(-1)[1],80);
+    buttons[1]();buttons[1]();assert.equal(servo(r).at(-1)[1],100);
+    logo();assert.equal(servo(r).at(-1)[1],90);
+});
 test('new axis positions support inverted calibration, elevation and Push piecewise front',()=>{
     const r=setup();r.api.configurarElevacionPinza(1,140,40);
     r.api.ponerEjeMechanic(0,25);r.api.ponerEjeMechanic(4,25);

@@ -4,11 +4,12 @@
 |---|---|---|
 | micro:bit | V2 | PXT y ejemplo combinado logo/sonido/A/B/pantalla/sensores nativos; ensayo físico pendiente. |
 | Maqueen | Lite clásico/v4 | Control contrastado con commit fijo DFRobot; revisión escolar desconocida. Probar alimentación, polaridad y salidas. |
+| Referencia externa | Lite V5 | Se inspeccionó el controlador oficial como referencia de funciones. No se ofrece como otro perfil seleccionable ni se atribuyen sus sensores al robot de este proyecto. |
 | GamePad | DFR0536 V4 joystick | Guía oficial accesible y pinout coincidente: X=P1/Y=P2/Z=P8, C/D/E/F=P13/P14/P15/P16, vibrador/LED=P12, botones activos bajos. Ensayo físico pendiente. |
 | GamePad escolar | DFR0536 V2 de cuatro direcciones | Referencia digital arriba=P8/abajo=P13/izquierda=P14/derecha=P15; X=P1/Y=P2; vibrador=P12/LED=P16. Sin lecturas analógicas ni acceso a P16. Identidad física escolar pendiente. |
 | Mechanic | Beetle, Loader, Forklift, Push | Guía consultada, perfiles calibrables. Montaje escolar no confirmado. Elevación independiente de pinza: referencia histórica Plus original, sin garantía mecánica Lite. |
 
-No se declaran compatibles Lite v5/Plus/Plus V2/variantes desconocidas. Sin autodetección ni cambio de rol en ejecución. El mapa de cuatro direcciones del controlador histórico se usa como referencia de V2; no se importa su código. La [guía V4](https://wiki.dfrobot.com/dfr0536/) distingue revisiones. Buzzer externo fuera de alcance; sonido nativo micro:bit.
+La interfaz usa un único bloque iniciar Maqueen, sin selector ni rutas de versiones. El usuario confirmó dos sensores de línea; se conserva ese controlador Lite. No hay autodetección ni garantía de compatibilidad con otras placas. Plus/Plus V2 no se consideran equivalentes. El mapa de cuatro direcciones del controlador histórico se usa como referencia de GamePad V2; no se importa su código. La [guía del mando](https://wiki.dfrobot.com/dfr0536/) distingue revisiones. Buzzer externo fuera de alcance; sonido nativo micro:bit.
 
 La [comparación V4/V5](https://wiki.dfrobot.com/mbt0046/docs/21333) describe WS2812 ambientales en ambas y distingue faros. **RGB ambiental no implementado** en Copilli: APIs antiguas ocultas con diagnóstico, sin afirmar ausencia física.
 

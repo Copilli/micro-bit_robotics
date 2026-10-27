@@ -1,5 +1,17 @@
 //% color=#7B3F98 icon="\uf1b9" block="Robotics" groups='["Preparación","Robot","Sensores","Luces","GamePad","Mechanic","Avanzado"]'
 namespace copilli {
+    export enum ModeloMechanic {
+        //% block="Beetle (pinza)"
+        Beetle = 0,
+        //% block="Loader (pala)"
+        Loader = 1,
+        //% block="Forklift (horquillas)"
+        Forklift = 2,
+        //% block="Push (sensor giratorio)"
+        Push = 3,
+        //% block="elevación de pinza"
+        ElevacionPinza = 4
+    }
     export enum DireccionMovimiento {
         //% block="adelante"
         Adelante = 0,

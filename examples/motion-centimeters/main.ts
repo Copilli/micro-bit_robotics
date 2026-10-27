@@ -8,10 +8,10 @@ copilli.ajustarBalanceRuedas(0)
 copilli.calibrarRecorrido(copilli.DireccionMovimiento.Adelante, cmAdelanteMedidos, 2)
 copilli.calibrarRecorrido(copilli.DireccionMovimiento.Atras, cmAtrasMedidos, 2)
 input.onButtonPressed(Button.A, function () {
-    copilli.moverPor(copilli.DireccionMovimiento.Adelante, 20, copilli.UnidadMovimiento.Centimetros)
+    copilli.moverPorCentimetros(copilli.DireccionMovimiento.Adelante, 20)
 })
 input.onButtonPressed(Button.B, function () {
-    copilli.moverPor(copilli.DireccionMovimiento.Atras, 20, copilli.UnidadMovimiento.Centimetros)
+    copilli.moverPorCentimetros(copilli.DireccionMovimiento.Atras, 20)
 })
 input.onButtonPressed(Button.AB, function () {
     copilli.detener()

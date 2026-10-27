@@ -58,6 +58,16 @@ namespace copilliHardware {
     //% blockHidden=true
     export function distanceCm(): number {
         if (testDoubleEnabled) return fakeDistance
+        // Hasta cinco intentos, como Ultrasonic de DFRobot, sin presentar
+        // su valor de error 500 como si fuera una distancia medida.
+        for (let attempt = 0; attempt < 5; attempt++) {
+            let distance = readDistanceCm()
+            if (distance > 0) return distance
+        }
+        return -1
+    }
+
+    function readDistanceCm(): number {
         // DFRobot pxt-maqueen a1fbb5e, readUlt: acondicionamiento de 1 ms y ventana de 20 ms.
         pins.digitalWritePin(DigitalPin.P1, 1)
         basic.pause(1)
@@ -73,7 +83,7 @@ namespace copilliHardware {
         basic.pause(20)
         pins.digitalWritePin(DigitalPin.P1, 0)
         let pulse = pins.pulseIn(DigitalPin.P2, level == 0 ? PulseValue.High : PulseValue.Low, PULSE_TIMEOUT_US)
-        if (pulse <= 0 || pulse >= PULSE_TIMEOUT_US) return -1
+        if (pulse <= 0 || pulse > PULSE_TIMEOUT_US) return -1
         return Math.round(pulse / 59)
     }
 

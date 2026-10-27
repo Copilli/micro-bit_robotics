@@ -1,11 +1,11 @@
 copilli.iniciarMaqueen()
 
 // PLANTILLA CON CALIBRACIÓN PENDIENTE: ajusta con medidas seguras del Loader real.
-copilli.configurarPala(copilli.PuertoServo.S1, 0, 0)
+copilli.configurarMechanic(copilli.ModeloMechanic.Loader, copilli.PuertoServo.S1)
 
 input.onButtonPressed(Button.A, function () {
-    copilli.subirPala()
+    copilli.ponerMechanic(copilli.ModeloMechanic.Loader, 100)
 })
 input.onButtonPressed(Button.B, function () {
-    copilli.bajarPala()
+    copilli.ponerMechanic(copilli.ModeloMechanic.Loader, 0)
 })

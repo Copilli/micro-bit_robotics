@@ -1,15 +1,18 @@
 copilli.iniciarMaqueen()
 
 // Push: el servo orienta el ultrasonido. La placa frontal empuja al conducir.
-// PLANTILLA CON CALIBRACIÓN PENDIENTE: reemplaza los ceros con ángulos medidos.
-copilli.configurarSensorGiratorio(copilli.PuertoServo.S1, 0, 0, 0)
+// Ejemplo de recorrido corto: ajusta puerto y ángulos al montaje antes de ejecutar.
+// Configurar no mueve; establecer posición inicial sí envía el ángulo de frente.
+copilli.configurarMechanic(copilli.ModeloMechanic.Push, copilli.PuertoServo.S1)
+copilli.establecerPosicionInicialMechanic(copilli.EjeMechanic.SensorPush, 50)
+copilli.establecerCeroMechanic(copilli.ModeloMechanic.Push)
 
 input.onButtonPressed(Button.A, function () {
-    copilli.orientarSensor(copilli.DireccionSensor.Izquierda)
+    copilli.girarMechanicGrados(copilli.ModeloMechanic.Push, -10)
 })
 input.onButtonPressed(Button.B, function () {
-    copilli.orientarSensor(copilli.DireccionSensor.Derecha)
+    copilli.girarMechanicGrados(copilli.ModeloMechanic.Push, 10)
 })
 input.onLogoEvent(TouchButtonEvent.Pressed, function () {
-    copilli.orientarSensor(copilli.DireccionSensor.Frente)
+    copilli.orientarMechanicGrados(copilli.ModeloMechanic.Push, 0)
 })

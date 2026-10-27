@@ -4,10 +4,10 @@ copilli.iniciarMaqueen()
 copilli.fijarPotenciaMovimiento(40)
 copilli.ajustarBalanceRuedas(0)
 input.onButtonPressed(Button.A, function () {
-    copilli.moverPor(copilli.DireccionMovimiento.Adelante, 2, copilli.UnidadMovimiento.Segundos)
+    copilli.moverPorSegundos(copilli.DireccionMovimiento.Adelante, 2)
 })
 input.onButtonPressed(Button.B, function () {
-    copilli.moverPor(copilli.DireccionMovimiento.Atras, 2, copilli.UnidadMovimiento.Segundos)
+    copilli.moverPorSegundos(copilli.DireccionMovimiento.Atras, 2)
 })
 input.onButtonPressed(Button.AB, function () {
     copilli.detener()

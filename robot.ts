@@ -5,9 +5,7 @@ namespace copilli {
         copilliDiagnostics.setRobot("Prepara " + device + " con su bloque iniciar antes de usar esta accion.")
     }
 
-    /**
-     * Prepara Maqueen Lite clásico/v4 y detiene sus ruedas. No inicializa accesorios.
-     */
+    /** Prepara Maqueen y detiene ruedas; no mueve accesorios. */
     //% blockId=copilli_iniciar_maqueen block="iniciar Maqueen"
     //% group="Preparación" weight=100
     export function iniciarMaqueen(): void {
@@ -97,7 +95,8 @@ namespace copilli {
     }
 
     /**
-     * Lee distancia en centímetros; -1 significa que no hubo eco válido.
+     * Lee distancia en centímetros con hasta cinco intentos; -1 significa que no hubo eco válido.
+     * Fuera del alcance físico no hay distancia medida; no se sustituye el error por 500 cm.
      */
     //% blockId=copilli_distancia_cm block="distancia en cm"
     //% group="Sensores" weight=100
@@ -119,7 +118,15 @@ namespace copilli {
             reportNotReady("Maqueen")
             return false
         }
+        if (!validLineSensor(sensor)) return false
         return copilliHardware.lineSensor(sensor) == 0
+    }
+
+    function validLineSensor(sensor: SensorLinea): boolean {
+        if (sensor != SensorLinea.Izquierdo && sensor != SensorLinea.Derecho) {
+            copilliDiagnostics.setRobot("Sensor de línea no válido."); return false
+        }
+        return true
     }
 
     /**

@@ -3,7 +3,7 @@ radio.setGroup(24)
 copilli.iniciarMaqueen()
 
 // PLANTILLA CON CALIBRACIÓN PENDIENTE: cambia estos valores por límites medidos sin carga.
-copilli.configurarPala(copilli.PuertoServo.S1, 0, 0)
+copilli.configurarMechanic(copilli.ModeloMechanic.Loader, copilli.PuertoServo.S1)
 
 let ultimaOrdenValida = control.millis()
 let yaDetenidoPorTimeout = true
@@ -27,9 +27,9 @@ radio.onReceivedString(function (mensaje) {
         copilli.detener()
         ordenConduccion = true
     } else if (mensaje == "subir") {
-        copilli.subirPala()
+        copilli.ponerMechanic(copilli.ModeloMechanic.Loader, 100)
     } else if (mensaje == "bajar") {
-        copilli.bajarPala()
+        copilli.ponerMechanic(copilli.ModeloMechanic.Loader, 0)
     }
     if (ordenConduccion) {
         ultimaOrdenValida = control.millis()

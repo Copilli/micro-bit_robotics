@@ -60,10 +60,23 @@ for(const [level,expectedWrites,pulseLevel] of [[0,[1,0,0,1,0],1],[1,[1,0,1,0,0]
         assert.deepEqual(r.log.filter(x=>x[0]==='write'),expectedWrites.map(v=>['write',1,v]));
         assert.deepEqual(r.log.filter(x=>x[0]==='pause'),[['pause',1],['pause',20]]);
         assert.deepEqual(r.log.filter(x=>x[0]==='pulse'),[['pulse',2,pulseLevel,29000]]);
-        for(const pulse of [0,-1,29000]){r.pulse=pulse;assert.equal(r.api.distanciaCm(),-1);}
+        for(const pulse of [0,-1,29001]){r.pulse=pulse;assert.equal(r.api.distanciaCm(),-1);}
+        for(const cm of [100,200,300,400]){r.pulse=cm*59;assert.equal(r.api.distanciaCm(),cm);}
+        r.pulse=29000;assert.equal(r.api.distanciaCm(),492);
         r.pulse=590;assert.equal(r.api.distanciaCm(),10);
     });
 }
+test('H07: missing echo retries, recovers a distant reading and remains bounded',()=>{
+    const r=runtime();r.api.iniciarMaqueen();r.log.length=0;
+    let attempts=0;
+    r.pulse=0;
+    r.pauseHook=ms=>{if(ms===20 && ++attempts===3)r.pulse=23600;};
+    assert.equal(r.api.distanciaCm(),400);
+    assert.equal(r.log.filter(x=>x[0]==='pulse').length,3);
+    r.pauseHook=undefined;r.pulse=0;r.log.length=0;
+    assert.equal(r.api.distanciaCm(),-1);
+    assert.equal(r.log.filter(x=>x[0]==='pulse').length,5);
+});
 test('H07: obstacle example stops for invalid readings using actual sensor code',()=>{
     const r=runtime();r.loadExample('examples/maqueen-obstacle/main.ts');r.pulse=0;r.loops[0]();assert.deepEqual(last(r),[[0,0,0],[2,0,0]]);
     r.pulse=1180;r.loops[0]();assert.deepEqual(last(r),[[0,0,77],[2,0,77]]);

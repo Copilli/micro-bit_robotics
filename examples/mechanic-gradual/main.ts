@@ -1,11 +1,7 @@
-// Sustituye SOLO por límites de apertura/cierre y elevación medidos sin carga.
-let abierta = 0
-let cerrada = 0
-let baja = 0
-let alta = 0
+// Usa perfiles iniciales; ajusta límites de cada modelo al montaje antes de ejecutarlo.
 copilli.iniciarMaqueen()
-copilli.configurarPinza(copilli.PuertoServo.S2, abierta, cerrada)
-copilli.configurarElevacionPinza(copilli.PuertoServo.S1, baja, alta)
+copilli.configurarMechanic(copilli.ModeloMechanic.Beetle, copilli.PuertoServo.S2)
+copilli.configurarMechanic(copilli.ModeloMechanic.ElevacionPinza, copilli.PuertoServo.S1)
 copilli.fijarRapidezMechanic(30)
 copilli.configurarRapidezEjeMechanic(copilli.EjeMechanic.ElevacionPinza, 20)
 // Estas órdenes iniciales son directas, no graduales; comprueba el espacio libre.
@@ -16,10 +12,10 @@ if (copilli.mechanicConfigurado(copilli.EjeMechanic.ElevacionPinza)) {
     copilli.establecerPosicionInicialMechanic(copilli.EjeMechanic.ElevacionPinza, 0)
 }
 input.onButtonPressed(Button.A, function () {
-    copilli.ponerEjeMechanic(copilli.EjeMechanic.AperturaPinza, 50)
+    copilli.ponerMechanic(copilli.ModeloMechanic.Beetle, 50)
 })
 input.onButtonPressed(Button.B, function () {
-    copilli.ponerEjeMechanic(copilli.EjeMechanic.ElevacionPinza, 50)
+    copilli.ponerMechanic(copilli.ModeloMechanic.ElevacionPinza, 50)
 })
 input.onButtonPressed(Button.AB, function () {
     copilli.detenerMovimientoMechanic(copilli.EjeMechanic.AperturaPinza)

@@ -1,15 +1,15 @@
 # Ejemplos PXT y uso en MakeCode web
 
-29 proyectos independientes. Cada `pxt.json`/`main.ts` es un programa; controller y robot pertenecen a micro:bits separados. Carpetas con dependencia `file:` sirven para el desarrollo CLI local, no para importarlas directamente en el navegador.
+32 proyectos independientes. Cada `pxt.json`/`main.ts` es un programa; controller y robot pertenecen a micro:bits separados. Carpetas con dependencia `file:` sirven para el desarrollo CLI local, no para importarlas directamente en el navegador.
 
 ## Importación sin publicación
 
 1. En la raíz, instala herramientas fijadas y ejecuta `npm run setup:pxt`, `npm run validate:pxt` y `npm run export:web` (véase README).
-2. Se generan 29 archivos `.mkcd` en `output/makecode/`. Cada uno contiene su propio programa, bloques y una copia local de las mismas fuentes de Copilli; no depende de `file:` ni de un GitHub no publicado. Es una instantánea: vuelve a exportar si cambia la extensión.
+2. Se generan 32 archivos `.mkcd` en `output/makecode/`. Cada uno contiene su propio programa, bloques y una copia local de las mismas fuentes de Copilli; no depende de `file:` ni de un GitHub no publicado. Es una instantánea: vuelve a exportar si cambia la extensión.
 3. Abre [MakeCode micro:bit](https://makecode.microbit.org). Selecciona **Importar → Abrir archivos desde tu equipo**, elige el `.mkcd` y confirma. Por ejemplo `radio-loader-controller.mkcd` y `radio-loader-robot.mkcd` son dos proyectos, no un programa combinado.
 4. Revisa puerto/límites con el profesor y sustituye los ceros solo por valores medidos. Importar no reemplaza esta calibración. Descarga al micro:bit correspondiente después de aprobar físicamente el montaje.
 
-Los cinco ejemplos nuevos y los 24 anteriores se exportan con las mismas fuentes locales. La versi?n base est? publicada; las mejoras de esta revisi?n requieren importaci?n local hasta autorizar su publicaci?n. Consulta [movimiento por unidades y Mechanic gradual](../docs/movimiento-lego.md).
+Los ejemplos usan las mismas fuentes locales y el mismo bloque iniciar Maqueen, sin selector de versiones. Consulta los perfiles de Mechanic y sus ajustes de recorrido.
 
 ## Índice
 
@@ -26,6 +26,9 @@ Los cinco ejemplos nuevos y los 24 anteriores se exportan con las mismas fuentes
 | `gamepad-joystick` | Referencia V4 con joystick y C/D/E/F/Z | — |
 | `maqueen-drive` | Conducción/faros con A/B | — |
 | `maqueen-obstacle` | Lectura inválida/obstáculo detiene ruedas | — |
+| `maqueen-basic` | Movimiento por segundos, distancia y dos sensores de línea | — |
+| `mechanic-models` | Un selector Mechanic, A 0%, B 100%, A+B 50% | ? |
+| `servo-s1-test` | Prueba directa S1 con inicio común | ? |
 | `mechanic-beetle` | Abrir/cerrar pinza | — |
 | `mechanic-lifting-gripper` | Apertura S2/elevación S1 independientes; montaje pendiente | — |
 | `mechanic-loader` | Subir/bajar pala | — |

@@ -3,7 +3,7 @@ radio.setGroup(25)
 copilli.iniciarMaqueen()
 
 // PLANTILLA CON CALIBRACIÓN PENDIENTE: cambia estos valores por límites medidos sin carga.
-copilli.configurarHorquillas(copilli.PuertoServo.S1, 0, 0)
+copilli.configurarMechanic(copilli.ModeloMechanic.Forklift, copilli.PuertoServo.S1)
 
 let ultimaOrdenValida = control.millis()
 let yaDetenidoPorTimeout = true
@@ -27,9 +27,9 @@ radio.onReceivedString(function (mensaje) {
         copilli.detener()
         ordenConduccion = true
     } else if (mensaje == "subir") {
-        copilli.subirHorquillas()
+        copilli.ponerMechanic(copilli.ModeloMechanic.Forklift, 100)
     } else if (mensaje == "bajar") {
-        copilli.bajarHorquillas()
+        copilli.ponerMechanic(copilli.ModeloMechanic.Forklift, 0)
     }
     if (ordenConduccion) {
         ultimaOrdenValida = control.millis()

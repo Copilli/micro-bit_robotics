@@ -32,6 +32,23 @@ test('timed motion uses elapsed time, stops and rejects durations over 120s', ()
     assert.ok(motors(r).some(x=>x[1]===1 && x[2]===102));
     r.api.moverPor(0,121,0); assert.match(r.api.diagnosticoRobot(),/120/);
 });
+test('basic seconds and centimeters blocks share configured power, calibration and cancellation', () => {
+    const r=setup(); r.api.fijarPotenciaMovimiento(60);
+    r.api.moverPorSegundos(0,0.25);
+    assert.equal(r.time,250);
+    assert.ok(motors(r).some(x=>x[1]===0 && x[2]===153));
+    assert.deepEqual(last(r),[[0,0,0],[2,0,0]]);
+    r.api.moverPorCentimetros(1,10);
+    assert.match(r.api.diagnosticoRobot(),/calibración/);
+    r.api.calibrarRecorrido(1,20,1);
+    r.api.moverPorCentimetros(1,10);
+    assert.equal(r.time,750);
+    assert.ok(motors(r).some(x=>x[1]===1 && x[2]===153));
+    r.pauseHook=()=>r.api.detener();
+    r.api.moverPorSegundos(0,1);
+    assert.equal(r.time,770);
+    assert.deepEqual(last(r),[[0,0,0],[2,0,0]]);
+});
 test('power changes only affect subsequent orders', () => {
     const r=setup(); let once=false;
     r.pauseHook=()=>{if(!once){once=true; r.api.fijarPotenciaMovimiento(80);}};
