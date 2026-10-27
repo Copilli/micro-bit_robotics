@@ -1,4 +1,6 @@
-# Robotics: Maqueen, GamePad DFRobot y Maqueen Mechanic
+# Copilli Robotics
+
+Robótica con micro:bit, Maqueen, GamePad DFRobot y Maqueen Mechanic.
 
 Extensión MakeCode/PXT con bloques en español bajo `copilli`. Robot, sensores externos, faros, GamePad y Mechanic se combinan con Radio, pantalla, A/B, sonido, logo, sensores integrados, pausas y ciclos **nativos**. Producción no administra Radio.
 

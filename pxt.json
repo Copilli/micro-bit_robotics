@@ -1,7 +1,7 @@
 {
-    "name": "robotics",
+    "name": "copilli-robotics",
     "version": "0.1.0",
-    "description": "Robótica con micro:bit, Maqueen Lite, mandos DFRobot GamePad de botones V2 o joystick V4 y accesorios Maqueen Mechanic",
+    "description": "Copilli Robotics: robótica con micro:bit, Maqueen Lite, GamePad DFRobot y accesorios Maqueen Mechanic",
     "license": "MIT",
     "dependencies": {
         "core": "*"
@@ -25,5 +25,6 @@
     "supportedTargets": [
         "microbit"
     ],
-    "preferredEditor": "tsprj"
+    "preferredEditor": "tsprj",
+    "icon": "icon.png"
 }

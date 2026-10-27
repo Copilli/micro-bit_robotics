@@ -161,11 +161,44 @@ namespace copilli {
         }
     }
 
+    //% blockId=copilli_mover_mecanismo block="mover %mecanismo a %estado"
+    //% group="Mechanic" weight=100
+    export function moverMecanismo(mecanismo: Mecanismo, estado: EstadoMecanismo): void {
+        switch (mecanismo) {
+            case Mecanismo.Pinza:
+                if (estado == EstadoMecanismo.Abierto) moveMechanism(Mecanismo.Pinza, 100)
+                else if (estado == EstadoMecanismo.Cerrado) moveMechanism(Mecanismo.Pinza, 0)
+                else copilliDiagnostics.setMechanic(Mecanismo.Pinza, "Acción no válida para la pinza; usa abierto o cerrado.")
+                break
+            case Mecanismo.Pala:
+                if (estado == EstadoMecanismo.Subir) moveMechanism(Mecanismo.Pala, 100)
+                else if (estado == EstadoMecanismo.Bajar) moveMechanism(Mecanismo.Pala, 0)
+                else copilliDiagnostics.setMechanic(Mecanismo.Pala, "Acción no válida para la pala; usa subir o bajar.")
+                break
+            case Mecanismo.Horquillas:
+                if (estado == EstadoMecanismo.Subir) moveMechanism(Mecanismo.Horquillas, 100)
+                else if (estado == EstadoMecanismo.Bajar) moveMechanism(Mecanismo.Horquillas, 0)
+                else copilliDiagnostics.setMechanic(Mecanismo.Horquillas, "Acción no válida para las horquillas; usa subir o bajar.")
+                break
+        }
+    }
+
+    //% blockId=copilli_mover_mecanismo_porcentaje block="mover %mecanismo al %porcentaje \\%"
+    //% porcentaje.min=0 porcentaje.max=100 porcentaje.defl=50
+    //% group="Mechanic" weight=95
+    export function moverMecanismoPorcentaje(mecanismo: Mecanismo, porcentaje: number): void {
+        if (porcentaje != porcentaje) {
+            copilliDiagnostics.setMechanic(mecanismo, "Porcentaje Mechanic no válido; no se envió ningún ángulo.")
+            return
+        }
+        moveMechanism(mecanismo, copilliLogic.limit(porcentaje, 0, 100))
+    }
+
     /**
      * Abre la pinza Beetle a la posición calibrada.
      */
     //% blockId=copilli_abrir_pinza block="abrir pinza"
-    //% group="Mechanic" weight=100
+    //% group="Mechanic" weight=90
     export function abrirPinza(): void {
         moveMechanism(Mecanismo.Pinza, 100)
     }
@@ -174,7 +207,7 @@ namespace copilli {
      * Cierra la pinza Beetle a la posición calibrada.
      */
     //% blockId=copilli_cerrar_pinza block="cerrar pinza"
-    //% group="Mechanic" weight=95
+    //% group="Mechanic" weight=89
     export function cerrarPinza(): void {
         moveMechanism(Mecanismo.Pinza, 0)
     }
@@ -183,7 +216,7 @@ namespace copilli {
      * Sube la pala Loader a la posición calibrada.
      */
     //% blockId=copilli_subir_pala block="subir pala"
-    //% group="Mechanic" weight=90
+    //% group="Mechanic" weight=88
     export function subirPala(): void {
         moveMechanism(Mecanismo.Pala, 100)
     }
@@ -215,11 +248,33 @@ namespace copilli {
         moveMechanism(Mecanismo.Horquillas, 0)
     }
 
+    //% blockId=copilli_orientar_sensor_angulo block="orientar sensor en %angulo º"
+    //% angulo.min=10 angulo.max=170 angulo.defl=90
+    //% group="Mechanic" weight=70
+    export function orientarSensorAngulo(angulo: number): void {
+        let profile = findProfile(3)
+        if (profile == null) {
+            copilliDiagnostics.setMechanic(3, "Accion segura: falta configurar y calibrar el sensor giratorio Push.")
+            return
+        }
+        if (!copilliRobotIsReady()) {
+            copilliDiagnostics.setMechanic(3, "Prepara Maqueen antes de mover un servo; no se envio ningun angulo.")
+            return
+        }
+        if (!validAngle(angulo)) {
+            copilliDiagnostics.setMechanic(3, "Angulo invalido; usa un valor entero entre 10 y 170.")
+            return
+        }
+        copilliHardware.setServo(profile.port, angulo)
+        profile.targetAngle = angulo
+        copilliDiagnostics.setMechanic(3, "")
+    }
+
     /**
      * Orienta el ultrasonido giratorio del accesorio Push. La placa frontal empuja al conducir.
      */
     //% blockId=copilli_orientar_sensor block="orientar sensor %direccion"
-    //% group="Mechanic" weight=70
+    //% group="Mechanic" weight=69
     export function orientarSensor(direccion: DireccionSensor): void {
         let profile = findProfile(3)
         if (profile == null) {

@@ -90,6 +90,23 @@ namespace copilli {
         Horquillas = 2
     }
 
+    export enum EstadoMecanismo {
+        //% block="abierto"
+        Abierto = 0,
+        //% block="cerrado"
+        Cerrado = 1,
+        //% block="subir"
+        Subir = 2,
+        //% block="bajar"
+        Bajar = 3,
+        //% block="izquierda"
+        Izquierda = 4,
+        //% block="frente"
+        Frente = 5,
+        //% block="derecha"
+        Derecha = 6
+    }
+
     export enum DireccionSensor {
         //% block="izquierda"
         Izquierda = 0,
